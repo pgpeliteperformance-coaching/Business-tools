@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PGP Assessment — Quality Control</title>
+<link rel="stylesheet" href="../css/app.css">
+</head>
+<body>
+<header class="hdr">
+  <div class="hdr-brand">
+    <div class="hdr-mark" aria-hidden="true">QC</div>
+    <div class="hdr-titles">
+      <div class="hdr-t1">QUALITY CONTROL SUITE</div>
+      <div class="hdr-t2">PGP Combat Athlete Performance Assessment</div>
+    </div>
+  </div>
+  <div class="hdr-right"><a class="btn btn-sm" href="../index.html">← Back to the app</a></div>
+</header>
+<main>
+  <div class="pg on">
+    <div class="pg-head">
+      <h1 class="pg-title">Quality control</h1>
+      <p class="pg-sub">Verifies the calculation engine, the benchmark matching rules, the missing-data behaviour,
+      the retest logic and the report language against seven fixture athletes: normal, very high, very low, missing
+      tests, different body weight and sex, a retest with a changed protocol, and deliberately invalid input.</p>
+    </div>
+    <div class="btn-row" style="margin-bottom:16px">
+      <button class="btn btn-primary" id="run">Run all checks</button>
+    </div>
+    <div id="summary"></div>
+    <div id="out"></div>
+  </div>
+</main>
+
+<script src="../js/core/stats.js"></script>
+<script src="../js/core/calc.js"></script>
+<script src="../js/config/tests.js"></script>
+<script src="../js/config/benchmarks.js"></script>
+<script src="../js/config/settings.js"></script>
+<script src="../js/config/protocol.js"></script>
+<script src="../js/core/validate.js"></script>
+<script src="../js/core/model.js"></script>
+<script src="../js/core/engine.js"></script>
+<script src="../js/data/sample.js"></script>
+<script src="../js/core/store.js"></script>
+<script src="../js/core/csv.js"></script>
+<script src="qc.js"></script>
+<script>
+(function () {
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s)
+      .replace(/[&<>"']/g, function (c) {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+      });
+  }
+  function run() {
+    var res = PGP.QC.run();
+    var pass = res.filter(function (r) { return r.pass; }).length;
+    document.getElementById('summary').innerHTML =
+      '<div class="notice notice-' + (pass === res.length ? 'info' : 'critical') + '">' +
+      '<span class="notice-ico">' + (pass === res.length ? 'i' : '!') + '</span><div><b>' +
+      pass + ' of ' + res.length + ' checks passed.</b> ' +
+      (pass === res.length
+        ? 'The engine is behaving as specified.'
+        : 'Review the failures before using this build for real testing.') +
+      '</div></div>';
+    document.getElementById('out').innerHTML =
+      '<div class="card" style="margin-top:16px"><div class="tbl-wrap"><table class="tbl"><thead><tr>' +
+      '<th></th><th>Check</th><th>Result</th></tr></thead><tbody>' +
+      res.map(function (r) {
+        return '<tr><td>' + (r.pass
+          ? '<span class="badge badge-good">pass</span>'
+          : '<span class="badge badge-critical">fail</span>') + '</td><td>' + esc(r.name) +
+          '</td><td class="fineprint">' + esc(r.msg) + '</td></tr>';
+      }).join('') + '</tbody></table></div></div>';
+  }
+  document.getElementById('run').addEventListener('click', run);
+  run();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="PGP Combat Athlete Performance Assessment — a repeatable physical performance testing, benchmarking and reporting system for MMA, Muay Thai and boxing athletes.">
+<meta name="theme-color" content="#0b0d12">
+<title>PGP Combat Athlete Performance Assessment</title>
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/print.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23c9a84c'/><text x='16' y='22' font-family='sans-serif' font-size='15' font-weight='800' text-anchor='middle' fill='%230b0d12'>P</text></svg>">
+</head>
+<body>
+
+<a class="sr-only" href="#pgMain">Skip to content</a>
+
+<header class="hdr no-print">
+  <div class="hdr-brand">
+    <div class="hdr-mark" aria-hidden="true">PGP</div>
+    <div class="hdr-titles">
+      <div class="hdr-t1">COMBAT ATHLETE PERFORMANCE ASSESSMENT</div>
+      <div class="hdr-t2">Test · Benchmark · Identify · Train · Retest</div>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <div class="hdr-meta">
+      <div id="hdrDate">—</div>
+      <div id="hdrProtocol">—</div>
+    </div>
+    <span class="save-state" id="saveState" title="Data is saved in this browser only">—</span>
+  </div>
+</header>
+
+<nav class="nav no-print" id="nav" aria-label="Main navigation"></nav>
+
+<main id="pgMain">
+  <div id="globalNotice" class="no-print"></div>
+  <section class="pg" id="pg-dashboard"  aria-label="Dashboard"></section>
+  <section class="pg" id="pg-athletes"   aria-label="Athletes"></section>
+  <section class="pg" id="pg-newtest"    aria-label="New test"></section>
+  <section class="pg" id="pg-event"      aria-label="Testing day"></section>
+  <section class="pg" id="pg-database"   aria-label="Database"></section>
+  <section class="pg" id="pg-benchmarks" aria-label="Benchmarks"></section>
+  <section class="pg" id="pg-reports"    aria-label="Reports"></section>
+  <section class="pg" id="pg-protocol"   aria-label="Protocol"></section>
+  <section class="pg" id="pg-settings"   aria-label="Settings"></section>
+</main>
+
+<div class="modal-bg no-print" id="modalBg" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal">
+    <div class="modal-hd">
+      <span class="card-ttl" id="modalTitle">—</span>
+      <button class="btn btn-sm btn-ghost" id="modalClose" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-bd" id="modalBody"></div>
+    <div class="modal-ft" id="modalFoot"></div>
+  </div>
+</div>
+
+<noscript>
+  <div style="padding:30px;max-width:640px;margin:0 auto">
+    <h1 style="font-size:20px">JavaScript is required</h1>
+    <p style="margin-top:10px;line-height:1.6;color:#a4abbd">This application does all of its calculation in the
+    browser — there is no server. Enable JavaScript to use it.</p>
+  </div>
+</noscript>
+
+<!-- ==================================================================
+     Load order matters: primitives, then configuration, then the core
+     engine, then the UI. Plain classic scripts, deliberately: the app must
+     open from a local file with no web server and no network.
+     ================================================================== -->
+<script src="js/core/stats.js"></script>
+<script src="js/core/calc.js"></script>
+<script src="js/config/tests.js"></script>
+<script src="js/config/benchmarks.js"></script>
+<script src="js/config/settings.js"></script>
+<script src="js/config/protocol.js"></script>
+<script src="js/core/validate.js"></script>
+<script src="js/core/model.js"></script>
+<script src="js/core/engine.js"></script>
+<script src="js/data/sample.js"></script>
+<script src="js/core/store.js"></script>
+<script src="js/core/csv.js"></script>
+<script src="js/ui/ui.js"></script>
+<script src="js/ui/charts.js"></script>
+<script src="js/app.js"></script>
+<script src="js/ui/dashboard.js"></script>
+<script src="js/ui/athletes.js"></script>
+<script src="js/ui/newtest.js"></script>
+<script src="js/ui/event.js"></script>
+<script src="js/ui/database.js"></script>
+<script src="js/ui/benchmarks.js"></script>
+<script src="js/ui/reports.js"></script>
+<script src="js/ui/protocolview.js"></script>
+<script src="js/ui/settingsview.js"></script>
+<script src="tests/qc.js"></script>
+</body>
+</html>

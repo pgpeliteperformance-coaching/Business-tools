@@ -1,0 +1,91 @@
+/* ==========================================================================
+   PGP COMBAT ATHLETE PERFORMANCE ASSESSMENT — print.css
+   --------------------------------------------------------------------------
+   Print / "Save as PDF" layout for the athlete report and the gym report.
+   The screen app is dark; print is light — a dark report wastes ink and is
+   unreadable on paper. Charts are re-coloured for a white surface via the
+   .report-print scope, so the same SVG serves both.
+   Use the browser's Print dialog and choose "Save as PDF". A4 portrait,
+   background graphics ON.
+   ========================================================================== */
+@page { size: A4 portrait; margin: 13mm 12mm 14mm; }
+
+@media print {
+  html, body { background: #fff !important; color: #111 !important; }
+  body { font-size: 10.5pt; }
+
+  /* everything that is not the report is hidden */
+  .hdr, .nav, .wizard-nav, .toast, .tip, .modal-bg, .no-print,
+  .pg:not(.on), .print-hide { display: none !important; }
+  main { padding: 0 !important; max-width: none !important; }
+
+  .print-only { display: block !important; }
+
+  /* ---- light re-skin of the shared components ---- */
+  .card, .stat, .notice, .q-item, details.disc {
+    background: #fff !important; border: 1pt solid #c9ccd4 !important;
+    border-radius: 3pt !important; box-shadow: none !important;
+  }
+  .card-hd { border-bottom: 1pt solid #dfe2e8 !important; background: #f6f7f9 !important; }
+  .card-ttl, .pg-title, .stat-val, .hero-num, table.tbl td { color: #111 !important; }
+  .pg-sub, .card-note, .stat-lbl, .stat-sub, .fineprint, .hint,
+  table.tbl th, .eyebrow, .pbar-lbl small { color: #4a4f5a !important; }
+  .pbar-track { background: #e6e8ec !important; }
+  .pbar-none { color: #6a7080 !important; }
+  table.tbl th { background: #f6f7f9 !important; border-bottom: 1pt solid #b9bdc7 !important; }
+  table.tbl td { border-bottom: .5pt solid #e2e5ea !important; }
+  table.tbl tbody tr:hover { background: none !important; }
+  .kv dt { color: #4a4f5a !important; }
+  .kv dd { color: #111 !important; }
+
+  /* charts: light surface */
+  .chart .grid-line { stroke: #d2d6dd !important; }
+  .chart .axis-lbl, .chart .tick-lbl { fill: #4a4f5a !important; }
+  .chart .val-lbl { fill: #111 !important; }
+  .chart text { fill: #333 !important; }
+
+  /* badges keep their level colour but gain a border so they survive
+     greyscale printing, and they always carry their text label */
+  .badge { border: .8pt solid currentColor !important; background: none !important; }
+  .badge-lv1 { color: #8a4713 !important; } .badge-lv2 { color: #8a5c00 !important; }
+  .badge-lv3 { color: #7d6520 !important; } .badge-lv4 { color: #6e5d2c !important; }
+  .badge-good { color: #0a7a0a !important; } .badge-warning { color: #8a6000 !important; }
+  .badge-critical { color: #a32c2c !important; } .badge-info { color: #1c5fa8 !important; }
+  .badge-gold, .badge-none { color: #4a4f5a !important; }
+  .ref-tag { border: .8pt solid currentColor; background: none !important; }
+  .ref-PUBLISHED { color: #0a7a0a !important; }
+  .ref-PGP_PROVISIONAL { color: #8a6000 !important; }
+  .ref-PGP_INTERNAL { color: #1c5fa8 !important; }
+
+  .notice-critical { background: #fdf1f1 !important; border-color: #d9a3a3 !important; }
+  .notice-warning  { background: #fdf8ea !important; border-color: #ddc78a !important; }
+  .notice-info     { background: #f1f6fd !important; border-color: #a8c3e4 !important; }
+  .notice-gold     { background: #fbf8ef !important; border-color: #d6c795 !important; }
+
+  /* ---- report structure ---- */
+  .rpt { display: block !important; }
+  .rpt-cover { border-bottom: 2pt solid #c9a84c; padding-bottom: 8pt; margin-bottom: 12pt; }
+  .rpt-brand { font-size: 8pt; font-weight: 700; letter-spacing: .18em; color: #8a6f2c !important; text-transform: uppercase; }
+  .rpt-title { font-size: 17pt; font-weight: 800; letter-spacing: -.01em; margin: 2pt 0 1pt; color: #111 !important; }
+  .rpt-athlete { font-size: 13pt; font-weight: 700; color: #111 !important; }
+  .rpt-sec { break-inside: avoid; page-break-inside: avoid; margin-bottom: 11pt; }
+  .rpt-sec-h {
+    font-size: 8.5pt; font-weight: 800; letter-spacing: .15em; text-transform: uppercase;
+    color: #8a6f2c !important; border-bottom: .8pt solid #c9a84c;
+    padding-bottom: 3pt; margin-bottom: 7pt;
+  }
+  .rpt-break { break-before: page; page-break-before: always; }
+  .rpt-foot {
+    border-top: .8pt solid #c9ccd4; margin-top: 10pt; padding-top: 6pt;
+    font-size: 7.5pt; line-height: 1.45; color: #4a4f5a !important;
+  }
+  .grid { gap: 8pt !important; }
+  h1, h2, h3, h4, .rpt-sec-h, .card-hd { break-after: avoid; page-break-after: avoid; }
+  tr, .pbar, .q-item { break-inside: avoid; page-break-inside: avoid; }
+  thead { display: table-header-group; }
+  a { color: #111 !important; text-decoration: none; }
+  a[href^="http"]::after { content: ''; }
+}
+
+/* On screen, the print-only blocks stay hidden. */
+.print-only { display: none; }
