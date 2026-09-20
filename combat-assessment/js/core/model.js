@@ -400,7 +400,11 @@
     return result;
   };
 
-  /* Derive an entire session. Idempotent. */
+  /* Derive an entire session. Idempotent, and deliberately does NOT touch
+     updatedAt: derivation runs on every load and every render, so stamping
+     it here would make a session look freshly edited whenever it was merely
+     displayed — and would make an imported file always appear newer than
+     the local copy it is being merged into. */
   M.deriveSession = function (session) {
     if (!session) return session;
     session.bmi = Calc.calculateBMI(session.bodyMassKg, session.heightCm);
@@ -409,7 +413,13 @@
       if (!session.results[t.id]) session.results[t.id] = M.newResult(t.id);
       M.deriveResult(t.id, session.results[t.id], session);
     });
-    session.updatedAt = new Date().toISOString();
+    return session;
+  };
+
+  /* Record that a person just changed this session. Call it from the places
+     that accept an edit, not from derivation. */
+  M.touchSession = function (session) {
+    if (session) session.updatedAt = new Date().toISOString();
     return session;
   };
 

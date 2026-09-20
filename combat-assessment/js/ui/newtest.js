@@ -205,6 +205,7 @@
 
   function persist(now) {
     P.Model.deriveSession(W);
+    P.Model.touchSession(W);
     var S = P.Store;
     var i = (S.db.sessions || []).findIndex(function (x) { return x.id === W.id; });
     if (i === -1) S.db.sessions.push(W); else S.db.sessions[i] = W;

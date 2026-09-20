@@ -58,28 +58,45 @@
   /* Re-render the current page and any page that shows aggregate counts. */
   App.refresh = function () { App.render(); };
 
-  App.saveState = function (ok) {
+  /* The header says where the data is actually going, at all times. A coach
+     about to drive away from a gym should never have to guess. */
+  App.saveState = function () {
     var el = U.$('#saveState');
     if (!el) return;
-    if (P.Store.lastError) {
+    var S = P.Store, dest = S.destination();
+
+    if (S.lastError) {
+      el.className = 'save-state bad';
       el.textContent = 'NOT SAVED';
-      el.className = 'save-state';
-      el.style.color = 'var(--critical)';
-      el.title = P.Store.lastError;
+      el.title = S.lastError;
       return;
     }
-    el.style.color = '';
+    if (dest.kind === 'file') {
+      el.className = 'save-state ok';
+      el.textContent = '\u25cf ' + dest.name;
+      el.title = dest.detail;
+      return;
+    }
+    if (S.unsaved > 0) {
+      el.className = 'save-state warn';
+      el.textContent = S.unsaved + ' unsaved';
+      el.title = 'This browser is holding ' + S.unsaved + ' change' + (S.unsaved === 1 ? '' : 's') +
+        ' that are not in a file anywhere. Connect a workbook file or export before you finish.';
+      return;
+    }
     el.className = 'save-state ok';
-    el.textContent = 'Saved ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    el.textContent = 'Saved in browser';
+    el.title = dest.detail;
   };
 
   App.touch = function () {
-    P.Store.autosave(function (ok) { App.saveState(ok); });
+    P.Store.autosave(function () { App.saveState(); App.storageNotice(); });
   };
 
   /* ---------------- boot ---------------- */
   function boot() {
     var db = P.Store.load();
+    P.Store.onChange = function () { App.saveState(); };
 
     /* nav */
     var nav = U.$('#nav');
@@ -110,16 +127,23 @@
       if (e.key === 'Escape') { U.closeModal(); U.tipHide(); }
     });
 
-    /* storage warning */
-    if (P.Store.lastError) {
-      U.$('#globalNotice').innerHTML = U.notice('critical', '<b>Storage problem.</b> ' +
-        U.esc(P.Store.lastError));
-    } else if (P.Store.hasDemoData()) {
-      U.$('#globalNotice').innerHTML = U.notice('gold',
-        '<b>Sample data loaded.</b> Every athlete currently in this database is fictional and is here to demonstrate the system. ' +
-        'Remove it from <b>Settings → Data</b> before you start entering real athletes. ' +
-        'Fictional athletes are excluded from nothing automatically except where marked, so clear them before building PGP internal norms.');
+    /* Reconnect the workbook file, if one was used before. Reading a file
+       is asynchronous, so the app starts on the browser copy and adopts the
+       file's contents the moment they arrive. */
+    if (P.FileStore) {
+      P.FileStore.restore().then(function (handle) {
+        if (!handle) { App.saveState(); App.storageNotice(); return; }
+        return P.FileStore.read().then(function (text) {
+          if (text && P.Store.adoptText(text)) U.toast('Workbook loaded from ' + P.FileStore.name);
+          App.saveState();
+          App.storageNotice();
+          App.render();
+        });
+      }).catch(function () { App.saveState(); App.storageNotice(); });
     }
+
+    /* where the data is going, and anything that needs acting on */
+    App.storageNotice();
 
     /* deep link */
     var hash = location.hash.slice(1);
@@ -129,8 +153,59 @@
       if (h && h !== App.page && PAGES.some(function (p) { return p.id === h; })) App.go(h);
     });
 
-    App.saveState(true);
+    App.saveState();
   }
+
+  /* The banner above every page: what is holding this data, and what to do
+     about it. Rewritten whenever the storage situation changes. */
+  App.storageNotice = function () {
+    var el = U.$('#globalNotice');
+    if (!el) return;
+    var S = P.Store, F = P.FileStore, dest = S.destination();
+    var html = '';
+
+    if (S.lastError) {
+      html += U.notice('critical', '<b>Storage problem.</b> ' + U.esc(S.lastError));
+    }
+    if (F && F.state === 'needs_permission') {
+      html += U.notice('critical', '<b>Not saving to your workbook file.</b> ' + U.esc(F.describe().detail) +
+        ' <button class="btn btn-sm btn-primary" id="gnReconnect" style="margin-left:8px">Reconnect ' +
+        U.esc(F.name || 'workbook') + '</button>');
+    } else if (F && F.state === 'error') {
+      html += U.notice('critical', '<b>Could not write to the workbook file.</b> ' + U.esc(F.describe().detail));
+    } else if (dest.kind !== 'file' && S.unsaved >= 12) {
+      html += U.notice('warning', '<b>' + S.unsaved + ' changes are only in this browser.</b> ' +
+        'Browser storage is not a filing cabinet — it goes when the device does, and Safari clears it for sites ' +
+        'left unopened for about a week. ' +
+        (F && F.supported()
+          ? 'Connect a workbook file so every change writes straight to disk.'
+          : 'Export before you finish here.') +
+        ' <button class="btn btn-sm btn-primary" id="gnFix" style="margin-left:8px">' +
+        (F && F.supported() ? 'Connect a workbook file' : 'Export now') + '</button>');
+    }
+    if (P.Store.hasDemoData()) {
+      html += U.notice('gold',
+        '<b>Sample data loaded.</b> Every athlete currently in this database is fictional and is here to demonstrate ' +
+        'the system. Remove it from <b>Settings \u2192 Data</b> before you start entering real athletes, so your gym ' +
+        'aggregates and your PGP internal norms are built from real data only.');
+    }
+    el.innerHTML = html;
+
+    var rc = U.$('#gnReconnect', el);
+    if (rc) rc.addEventListener('click', function () {
+      P.FileStore.reconnect().then(function (ok) {
+        if (!ok) { U.toast('Permission not granted'); App.storageNotice(); return; }
+        P.Store.saveNow();
+        U.toast('Workbook reconnected');
+        App.saveState(); App.storageNotice();
+      });
+    });
+    var fx = U.$('#gnFix', el);
+    if (fx) fx.addEventListener('click', function () {
+      if (P.FileStore && P.FileStore.supported()) P.App.views.settings.connectWorkbook();
+      else U.exportFile('json');
+    });
+  };
 
   P.App = App;
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

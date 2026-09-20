@@ -34,6 +34,7 @@ Netlify) and add the page to your home screen.
 ```
 combat-assessment/
 ├── index.html              the application
+├── manifest.webmanifest    lets iOS/Android install it to the Home Screen
 ├── css/app.css             dark UI theme
 ├── css/print.css           A4 report layout for print / Save as PDF
 ├── js/config/tests.js      the test battery: metrics, ranges, protocols, evidence
@@ -45,7 +46,8 @@ combat-assessment/
 ├── js/core/validate.js     data validation
 ├── js/core/model.js        data model and derivation
 ├── js/core/engine.js       benchmarking, scoring, profiling, retest, aggregates
-├── js/core/store.js        localStorage persistence
+├── js/core/store.js        persistence, and where the data is going
+├── js/core/filestore.js    writes straight to a workbook file on disk
 ├── js/core/csv.js          CSV / JSON export and import
 ├── js/data/sample.js       fictional sample and quality-control athletes
 ├── js/ui/                  views (one file per page) and charts
@@ -59,13 +61,41 @@ working. Every sample athlete is invented. Before you enter a real athlete, go
 to **Settings → Data → Remove all sample athletes**, so your gym aggregates and
 your PGP internal norms are built from real data only.
 
-### Backups — read this one
+### Where your data lives — read this one
 
-The database lives in **one browser on one device**. There is no server and no
-account. Clearing site data deletes it.
+There is no server, no account and no database service. You choose between two
+places, on **Settings → Data**.
 
-**Export a JSON backup after every testing day.** Settings → Data → Export JSON
-backup. That file is the only backup that exists.
+**A workbook file (recommended).** On a laptop in Chrome or Edge, press *Create
+a workbook file* and save it **inside a folder that syncs** — iCloud Drive,
+Dropbox, OneDrive, Google Drive. From then on every change writes straight into
+that file, and your sync service carries it to your other devices. Losing the
+laptop costs you nothing. The app reconnects to the file on its own next time;
+if the browser asks for permission again it says so rather than pretending to
+save.
+
+**Browser storage (the fallback).** Safari on iPad and iPhone cannot write to a
+file, so there the data sits in the browser. That is fine for a testing day and
+works with no signal, but it is not a filing cabinet: clearing site data wipes
+it, losing the device loses it, and **iOS clears storage for sites left
+unopened for about a week** — which is exactly what a gym you visit quarterly
+looks like. Two things make it safe:
+
+1. Add the app to the Home Screen, so iOS treats it as an app and keeps its storage.
+2. Export a JSON backup to the Files app before you leave every gym.
+
+The header always states which of the two is in use, and counts unsaved changes
+when nothing is backing them.
+
+### Working across two devices
+
+Test on the iPad, keep the master on the laptop. Export JSON from the iPad,
+then on the laptop use **Settings → Data → Merge in another device's file**.
+
+Merge adds rather than replaces: new athletes and sessions come in, a session
+edited more recently on the other device wins, nothing already on the laptop is
+deleted, and the other file's settings and custom reference sets are ignored —
+adopting those would change every percentile without telling you.
 
 ---
 
@@ -203,7 +233,7 @@ where the equipment changed.
 
 | Export | What it is |
 |---|---|
-| **JSON backup** | Everything, full fidelity. Round-trips without loss. The only backup. |
+| **JSON backup** | Everything, full fidelity. Round-trips without loss. Import replaces; **merge** folds it in. |
 | **Raw results CSV** | One row per session: every attempt and calculated metric. A test that was not performed exports as an **empty cell** with its reason alongside — never a zero. |
 | **Scores CSV** | Percentiles, levels, category scores, strengths and priorities, for Excel or Sheets. |
 | **Athlete roster CSV** | The athlete list, and the format the roster importer expects. |

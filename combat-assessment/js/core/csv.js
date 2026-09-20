@@ -110,6 +110,75 @@
                        gyms: db.gyms.length } };
   };
 
+  /* ----------------------------------------------------------------------
+     mergeJSON — fold one database into another instead of replacing it.
+
+     A coach who tests on an iPad at the gym and keeps the master on a
+     laptop needs to combine the two, not choose between them. Replacing
+     would silently destroy a day's work, so merging is the safe default
+     whenever the incoming file contains anything the current one does not.
+
+     Rules, in order of how much damage a wrong guess would do:
+       * Records are matched on id. Anything with a new id is added.
+       * A session that exists in both is taken from whichever copy was
+         updated most recently — sessions are append-only in practice, so
+         this resolves an edit made on one device after syncing.
+       * An athlete or gym that exists in both keeps the CURRENT record and
+         reports the clash, because athlete records carry consent and notes
+         a coach may have edited deliberately on this device.
+       * Settings and custom reference sets are never merged. They belong to
+         this installation and silently adopting another copy's scoring
+         rules would change every percentile without telling anybody.
+     ---------------------------------------------------------------------- */
+  C.mergeJSON = function (text, current) {
+    var parsed = C.importJSON(text);
+    if (!parsed.ok) return parsed;
+    var incoming = parsed.db;
+    var report = { athletesAdded: 0, athletesKept: 0, sessionsAdded: 0,
+                   sessionsUpdated: 0, gymsAdded: 0, eventsAdded: 0 };
+
+    function index(list) {
+      var m = {};
+      (list || []).forEach(function (x) { m[x.id] = x; });
+      return m;
+    }
+    var haveAth = index(current.athletes), haveSes = index(current.sessions),
+        haveGym = index(current.gyms), haveEvt = index(current.events);
+
+    (incoming.gyms || []).forEach(function (g) {
+      if (haveGym[g.id]) return;
+      current.gyms.push(g); report.gymsAdded++;
+    });
+    (incoming.athletes || []).forEach(function (a) {
+      if (haveAth[a.id]) { report.athletesKept++; return; }
+      current.athletes.push(a); report.athletesAdded++;
+    });
+    (incoming.sessions || []).forEach(function (s) {
+      var mine = haveSes[s.id];
+      if (!mine) { current.sessions.push(s); report.sessionsAdded++; return; }
+      var theirs = s.updatedAt || s.createdAt || '';
+      var ours = mine.updatedAt || mine.createdAt || '';
+      if (theirs > ours) {
+        current.sessions[current.sessions.indexOf(mine)] = s;
+        report.sessionsUpdated++;
+      }
+    });
+    (incoming.events || []).forEach(function (e) {
+      if (haveEvt[e.id]) return;
+      current.events.push(e); report.eventsAdded++;
+    });
+    Object.keys(incoming.retestTargets || {}).forEach(function (k) {
+      if (!current.retestTargets[k]) current.retestTargets[k] = incoming.retestTargets[k];
+    });
+
+    (current.sessions || []).forEach(function (s) { Model.deriveSession(s); });
+
+    report.total = report.athletesAdded + report.sessionsAdded + report.sessionsUpdated +
+                   report.gymsAdded + report.eventsAdded;
+    return { ok: true, db: current, report: report, warnings: parsed.warnings,
+             note: 'Settings and any custom reference sets in the imported file were ignored: they belong to the installation that made them, and adopting them would change every percentile in this database without saying so.' };
+  };
+
   /* ---- flat session CSV: one row per testing session ------------------- */
   C.sessionColumns = function () {
     var cols = ['athlete_id', 'athlete_name', 'athlete_number', 'sex', 'dob', 'age_at_test',

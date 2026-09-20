@@ -239,24 +239,75 @@
 
   /* ---------------- data ---------------- */
   function dataHtml() {
-    var S = P.Store, st = S.stats();
+    var S = P.Store, F = P.FileStore, st = S.stats();
+    var dest = S.destination(), fd = F ? F.describe() : null;
+
+    /* ---- where this database is kept ---- */
+    var cls = dest.kind === 'file' ? 'wb-ok'
+            : (F && (F.state === 'needs_permission' || F.state === 'error')) ? 'wb-bad' : 'wb-warn';
     var html = '<div class="card" style="margin-bottom:16px"><div class="card-hd">' +
-      '<span class="card-ttl">Backup and restore</span></div><div class="card-bd">' +
+      '<span class="card-ttl">Where this database is kept</span>' +
+      '<span class="card-note">' + (dest.kind === 'file' ? 'a file on disk' : 'this browser only') +
+      '</span></div><div class="card-bd">' +
+      '<div class="wb ' + cls + '"><span class="wb-dot"></span><div>' +
+      '<div class="wb-name">' + U.esc(dest.kind === 'file' ? dest.name : 'Browser storage') + '</div>' +
+      '<div class="wb-detail">' + U.esc(dest.detail) + '</div></div></div>';
+
+    if (F && F.supported()) {
+      html += '<div class="btn-row" style="margin-top:14px">' +
+        (dest.kind === 'file'
+          ? '<button class="btn" id="wbChange">Use a different file</button>' +
+            '<button class="btn btn-ghost" id="wbDisconnect">Disconnect</button>'
+          : '<button class="btn btn-primary" id="wbNew">Create a workbook file</button>' +
+            '<button class="btn" id="wbOpen">Open an existing workbook</button>') +
+        (F.state === 'needs_permission' ? '<button class="btn btn-primary" id="wbReconnect">Reconnect</button>' : '') +
+        '</div>' +
+        '<div class="fineprint" style="margin-top:12px;line-height:1.7">' +
+        '<b>Put the workbook inside a folder that syncs</b> — iCloud Drive, Dropbox, OneDrive, Google Drive. ' +
+        'Every change writes straight into that file, your sync service carries it to your other devices, and there ' +
+        'is no server, account or database service involved anywhere. Losing the laptop then costs you nothing.' +
+        '</div>';
+    } else {
+      html += U.notice('warning',
+        '<b>This browser cannot write directly to a file.</b> Safari on iPad and iPhone does not support it, so the ' +
+        'data is held in this browser and you must export it yourself. Two things make that safe: add this app to ' +
+        'the Home Screen so iOS keeps its storage, and export a JSON backup to the Files app before you leave every ' +
+        'gym. On a laptop in Chrome or Edge the app can write straight to a file instead.');
+    }
+    html += '</div></div>';
+
+    /* ---- backup and restore ---- */
+    html += '<div class="card" style="margin-bottom:16px"><div class="card-hd">' +
+      '<span class="card-ttl">Backup and restore</span>' +
+      (S.unsaved > 0 && dest.kind !== 'file'
+        ? '<span class="badge badge-warning">' + S.unsaved + ' unsaved</span>' : '') +
+      '</div><div class="card-bd">' +
       '<div class="btn-row">' +
       '<button class="btn btn-primary" id="sdJson">Export JSON backup</button>' +
       '<button class="btn" id="sdRaw">Export raw results (CSV)</button>' +
       '<button class="btn" id="sdScores">Export scores (CSV)</button>' +
+      '<button class="btn" id="sdMerge">Merge in another device\'s file</button>' +
       '</div>' +
-      U.notice('gold', '<b>This database lives in one browser on one device.</b> There is no server and no account. ' +
-        'Clearing site data, using a different browser, or switching device means the data is not there. ' +
-        'An exported JSON file is the only backup that exists — export after every testing day.') +
+      (dest.kind === 'file'
+        ? U.notice('info', '<b>Every change is already being written to ' + U.esc(dest.name) + '.</b> ' +
+            'Exports are still useful as a dated snapshot before a big change, but you are no longer relying on ' +
+            'your memory to keep the data safe.')
+        : U.notice('gold', '<b>This database lives in one browser on one device.</b> There is no server and no ' +
+            'account. Clearing site data, switching browser or losing the device means the data is gone, and iOS ' +
+            'Safari clears storage for sites left unopened for about a week. An exported JSON file is the only ' +
+            'backup that exists — export after every testing day.')) +
+      '<div class="fineprint" style="margin-top:10px"><b>Merge</b> folds another device\'s file into this one ' +
+      'instead of replacing it: new athletes and sessions are added, a session edited more recently on the other ' +
+      'device wins, and nothing already here is deleted. Use it to bring an iPad\'s testing day back to the laptop.</div>' +
       '<dl class="kv" style="margin-top:14px">' +
       '<dt>Athletes</dt><dd>' + st.athletes + '</dd>' +
       '<dt>Sessions</dt><dd>' + st.sessions + '</dd>' +
       '<dt>Gyms</dt><dd>' + st.gyms + '</dd>' +
       '<dt>Athletes with a retest</dt><dd>' + st.retested + '</dd>' +
       '<dt>Stored size</dt><dd>' + Math.round(st.bytes / 1024) + ' KB</dd>' +
-      '<dt>Storage available</dt><dd>' + (P.Store.storageOk ? 'Yes' : 'NO — nothing is being saved') + '</dd>' +
+      '<dt>Browser storage</dt><dd>' + (P.Store.storageOk ? 'Available' : 'BLOCKED — nothing is being saved') + '</dd>' +
+      '<dt>Last written to file</dt><dd>' +
+        (F && F.lastWriteAt ? F.lastWriteAt.toLocaleString() : 'never') + '</dd>' +
       '</dl>' +
       (P.Store.lastError ? U.notice('critical', '<b>Storage problem.</b> ' + U.esc(P.Store.lastError)) : '') +
       '</div></div>';
@@ -470,6 +521,53 @@
       save('Validation limits updated');
     });
 
+    /* ---- workbook file ---- */
+    function afterConnect(created) {
+      /* A file just picked for a NEW workbook is empty, so this database is
+         written into it. An EXISTING workbook already holds data, so its
+         contents win — otherwise opening last month's file would silently
+         overwrite it with whatever this browser happened to be holding. */
+      var F2 = P.FileStore;
+      if (created) {
+        S.saveNow();
+        U.toast('Workbook created — changes now save to ' + F2.name);
+        P.App.saveState(); P.App.storageNotice(); P.App.render();
+        return;
+      }
+      F2.read().then(function (text) {
+        if (text && S.adoptText(text)) U.toast('Workbook opened — ' + S.db.athletes.length + ' athletes loaded');
+        else { S.saveNow(); U.toast('Workbook connected'); }
+        P.App.saveState(); P.App.storageNotice(); P.App.render();
+      });
+    }
+    function fileErr(e) {
+      if (e && e.name === 'AbortError') return;      /* the coach cancelled */
+      U.modal({ title: 'Could not connect the file',
+        bodyHtml: U.notice('critical', U.esc(e && e.message ? e.message : String(e))) });
+    }
+    on('wbNew', function () { P.FileStore.createWorkbook().then(function () { afterConnect(true); }).catch(fileErr); });
+    on('wbChange', function () { P.FileStore.createWorkbook().then(function () { afterConnect(true); }).catch(fileErr); });
+    on('wbOpen', function () { P.FileStore.openWorkbook().then(function () { afterConnect(false); }).catch(fileErr); });
+    on('wbReconnect', function () {
+      P.FileStore.reconnect().then(function (ok) {
+        if (ok) { S.saveNow(); U.toast('Workbook reconnected'); }
+        else U.toast('Permission not granted');
+        P.App.saveState(); P.App.storageNotice(); P.App.render();
+      });
+    });
+    on('wbDisconnect', function () {
+      U.confirm('Disconnect the workbook file?',
+        'Changes will stop being written to <b>' + U.esc(P.FileStore.name || 'the file') +
+        '</b> and will be held in this browser only. The file itself is not deleted and keeps everything saved so far.',
+        function () {
+          P.FileStore.disconnect().then(function () {
+            U.toast('Workbook disconnected');
+            P.App.saveState(); P.App.storageNotice(); P.App.render();
+          });
+        }, 'Disconnect');
+    });
+    on('sdMerge', mergeFile);
+
     on('sdJson', function () { U.exportFile('json'); });
     on('sdRaw', function () { U.exportFile('sessions'); });
     on('sdScores', function () { U.exportFile('scores'); });
@@ -530,11 +628,79 @@
     });
   }
 
+  /* Fold another device's export into this database. */
+  function mergeFile() {
+    var S = P.Store;
+    U.modal({
+      title: 'Merge in another device\'s file',
+      bodyHtml: '<p style="line-height:1.65">Pick a JSON backup exported from another device. Its athletes and ' +
+        'sessions are added to this database. <b>Nothing already here is deleted.</b></p>' +
+        '<ul class="fineprint" style="margin:12px 0 0 18px;line-height:1.8">' +
+        '<li>An athlete or session that only exists in the other file is added.</li>' +
+        '<li>A session that exists in both is taken from whichever device edited it most recently.</li>' +
+        '<li>An athlete record that exists in both keeps the version on THIS device, because athlete records carry ' +
+        'consent and notes you may have changed here deliberately.</li>' +
+        '<li>Settings and custom reference sets in the other file are ignored — adopting them would change every ' +
+        'percentile in this database without telling you.</li>' +
+        '</ul>',
+      buttons: [
+        { label: 'Cancel', class: 'btn-ghost' },
+        { label: 'Choose file…', class: 'btn-primary', onClick: function () {
+          U.closeModal();
+          U.pickFile('.json,application/json', function (text) {
+            var r = P.Csv.mergeJSON(text, S.db);
+            if (!r.ok) {
+              U.modal({ title: 'Merge failed', bodyHtml: U.notice('critical', U.esc(r.error)) });
+              return;
+            }
+            S.saveNow();
+            P.App.saveState();
+            var rep = r.report;
+            U.modal({
+              title: rep.total ? 'Merged' : 'Nothing new to merge',
+              bodyHtml: (rep.total
+                ? '<dl class="kv">' +
+                  '<dt>Athletes added</dt><dd>' + rep.athletesAdded + '</dd>' +
+                  '<dt>Athletes already here</dt><dd>' + rep.athletesKept + '</dd>' +
+                  '<dt>Sessions added</dt><dd>' + rep.sessionsAdded + '</dd>' +
+                  '<dt>Sessions updated from the other device</dt><dd>' + rep.sessionsUpdated + '</dd>' +
+                  '<dt>Gyms added</dt><dd>' + rep.gymsAdded + '</dd>' +
+                  '<dt>Testing days added</dt><dd>' + rep.eventsAdded + '</dd></dl>'
+                : '<p>That file contained nothing this database did not already have. Nothing was changed.</p>') +
+                '<div class="fineprint" style="margin-top:12px">' + U.esc(r.note) + '</div>' +
+                (r.warnings && r.warnings.length
+                  ? '<div style="margin-top:12px">' + U.notice('warning', r.warnings.map(U.esc).join('<br>')) + '</div>'
+                  : ''),
+              buttons: [{ label: 'Done', class: 'btn-primary', onClick: function () {
+                P.App.storageNotice(); P.App.go('dashboard');
+              } }]
+            });
+          });
+          return true;
+        } }
+      ]
+    });
+  }
+
   function f(label, control, hint) {
     return '<div class="field"><label>' + U.esc(label) + '</label>' + control +
       (hint ? '<div class="hint">' + U.esc(hint) + '</div>' : '') + '</div>';
   }
 
   P.App = P.App || {}; P.App.views = P.App.views || {};
-  P.App.views.settings = { render: render };
+  P.App.views.settings = {
+    render: render,
+    /* Called from the banner's "Connect a workbook file" button. */
+    connectWorkbook: function () {
+      if (!P.FileStore || !P.FileStore.supported()) { U.exportFile('json'); return; }
+      P.App.go('settings');
+      tab = 'data';
+      P.App.render();
+      P.FileStore.createWorkbook().then(function () {
+        P.Store.saveNow();
+        U.toast('Workbook created — changes now save to ' + P.FileStore.name);
+        P.App.saveState(); P.App.storageNotice(); P.App.render();
+      }).catch(function (e) { if (e && e.name !== 'AbortError') U.toast('Could not create the file'); });
+    }
+  };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

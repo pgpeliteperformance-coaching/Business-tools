@@ -212,14 +212,53 @@ colour-vision-deficiency separation against this surface.
 
 ---
 
-## 12. No server, and what that costs
+## 12. No server, and how the data survives anyway
 
-`localStorage` only: it works in a gym with no signal, nothing leaves the device
-unless you export it, and there is nothing to run or pay for. The cost is that
-the database lives in one browser on one device, and an exported JSON file is
-the only backup. The app says so on the Testing Day page, the Database page and
-the Settings page, because it is the single most likely way for a coach to lose
-a day's work.
+No backend, no account, no database service: the app works in a basement gym
+with no signal, nothing leaves the device unless the coach sends it, and there
+is nothing to run or pay for.
+
+The first build kept everything in `localStorage`, and that was the wrong
+default for a coach who travels between gyms. Browser storage is not a filing
+cabinet — clearing site data wipes it, losing the device loses it, and iOS
+Safari evicts script-writable storage for sites left unopened for about a week,
+which describes a gym visited quarterly exactly. "Remember to export" is not a
+system.
+
+So the source of truth is now **a file the coach picks**, written through the
+File System Access API on every change. Put it in iCloud Drive or Dropbox and
+the sync service the coach already pays for becomes the backend, with no
+service to sign up for and nothing new to trust. Browser storage stays behind
+it as a same-device cache. Where the API does not exist — Safari on iPad and
+iPhone, Firefox — the app falls back to browser storage, counts the changes
+that are not in a file anywhere, and says so in the header and in a banner
+rather than failing quietly.
+
+Three supporting decisions follow from that:
+
+- **Opening an existing workbook loads the file, not the browser.** Otherwise
+  opening last month's file would overwrite it with whatever this browser
+  happened to be holding.
+- **Permission is never faked.** A browser cannot silently re-grant file
+  access, so a workbook that needs asking again shows a Reconnect button and
+  the header stops claiming to be saved.
+- **Import gained a merge mode**, because a coach testing on an iPad and
+  keeping the master on a laptop needs to combine the two, not choose. Merge
+  adds new records, takes the more recently edited copy of a session, keeps
+  this device's athlete records (they carry consent and notes edited here on
+  purpose), and ignores the other file's settings and custom reference sets —
+  silently adopting another installation's scoring rules would change every
+  percentile without saying so.
+
+Fixing that last point exposed a real bug: `deriveSession` stamped `updatedAt`,
+and derivation runs on every load and every render. Every imported session
+therefore looked newer than the local copy and would have won every merge.
+`updatedAt` now means "a person changed this", stamped only where an edit is
+accepted.
+
+A web app manifest lets iOS and Android install the app to the Home Screen,
+which both makes it launch like an app and makes the operating system far less
+willing to evict its storage.
 
 Every file is a plain classic script rather than an ES module, so `index.html`
 opens straight from the filesystem with no web server.
