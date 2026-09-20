@@ -323,8 +323,12 @@
       fld('Years in the sport', '<input type="number" id="fTa" value="' + (a.trainingAgeYears === null ? '' : a.trainingAgeYears) + '">') +
       fld('Years of structured S&C', '<input type="number" id="fSnc" value="' + (a.sncTrainingAgeYears === null ? '' : a.sncTrainingAgeYears) + '">',
           'Context for interpreting a strength result: an athlete with no lifting history has more room to gain.') +
-      fld('Gym', '<select id="fGym">' + U.selectOpts((S.db.gyms || []).map(function (g) {
-            return { id: g.id, label: g.name }; }), a.gymId, 'No gym') + '</select>') +
+      fld('Gym', '<input type="text" id="fGym" list="fGymList" value="' +
+          U.esc(S.gymName(a.gymId)) + '" placeholder="Type their gym" autocomplete="off">' +
+          '<datalist id="fGymList">' + (S.db.gyms || []).map(function (g) {
+            return '<option value="' + U.esc(g.name) + '">';
+          }).join('') + '</datalist>',
+          'Type any gym. If it is not one you have used before it is created for you — nothing to set up first.') +
       fld('Coach', '<input type="text" id="fCoach" value="' + U.esc(a.coach) + '">') +
       '</div>' +
       fld('Notes', '<textarea id="fNotes">' + U.esc(a.notes) + '</textarea>') +
@@ -354,7 +358,7 @@
           a.stance = U.$('#fStance').value || null;
           a.trainingAgeYears = U.numVal(U.$('#fTa'));
           a.sncTrainingAgeYears = U.numVal(U.$('#fSnc'));
-          a.gymId = U.$('#fGym').value || null;
+          a.gymId = S.gymIdForName(U.$('#fGym').value);
           a.coach = U.$('#fCoach').value.trim();
           a.notes = U.$('#fNotes').value.trim();
           a.availabilityNotes = U.$('#fAvail').value.trim();

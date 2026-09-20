@@ -216,6 +216,27 @@
     if (i === -1) S.db.sessions.push(s); else S.db.sessions[i] = s;
     S.autosave(); return s;
   };
+  /* Find the gym with this name, or create it. Gyms are never something the
+     coach has to set up in advance: they type a name and the record appears
+     behind it. Matching ignores case and surrounding spaces so "Southside
+     MMA" and "southside mma " do not become two gyms. */
+  S.gymIdForName = function (name) {
+    name = (name || '').trim();
+    if (!name) return null;
+    var found = (S.db.gyms || []).filter(function (g) {
+      return (g.name || '').trim().toLowerCase() === name.toLowerCase();
+    })[0];
+    if (found) return found.id;
+    var g = Model.newGym({ name: name });
+    S.upsertGym(g);
+    return g.id;
+  };
+
+  S.gymName = function (id) {
+    var g = S.gym(id);
+    return g ? g.name : '';
+  };
+
   S.upsertGym = function (g) {
     var i = (S.db.gyms || []).findIndex(function (x) { return x.id === g.id; });
     if (i === -1) S.db.gyms.push(g); else S.db.gyms[i] = g;

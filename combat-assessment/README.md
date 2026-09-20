@@ -138,6 +138,10 @@ There is one screen. It opens on it.
    defaults to where you are but can be changed for anyone visiting from
    elsewhere. That is what groups a report when you send a gym its athletes'
    results, and what the Reports page filters on.
+
+   Every gym field in the app is a box you type into, not a list you pick
+   from: type any name and the gym is created behind it. You can also change
+   an athlete's gym later from **Athletes → their profile → Edit**.
 3. **Fill in the numbers** on one scrolling page. Every test is there; typing a
    value marks that test as done. Best-of-three works itself out.
 4. Anything you could not test: hit **Not tested** and pick a reason. It never

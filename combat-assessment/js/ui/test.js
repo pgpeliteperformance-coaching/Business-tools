@@ -59,18 +59,7 @@
   }
 
   /* Find, or quietly create, the gym record behind the typed name. */
-  function gymIdFor(name) {
-    var S = P.Store;
-    name = (name || '').trim();
-    if (!name) return null;
-    var found = (S.db.gyms || []).filter(function (g) {
-      return g.name.toLowerCase() === name.toLowerCase();
-    })[0];
-    if (found) return found.id;
-    var g = P.Model.newGym({ name: name });
-    S.upsertGym(g);
-    return g.id;
-  }
+  function gymIdFor(name) { return P.Store.gymIdForName(name); }
 
   /* ====================== ROUTER ====================== */
   function render(mount) {
@@ -241,8 +230,8 @@
             'Their sex, age and sport are already on file.</div>';
           if (m.sex) U.$('#adSex', body).value = m.sex;
           if (m.sport) U.$('#adSport', body).value = m.sport;
-          var hg = P.Store.gym(m.gymId);
-          if (hg) U.$('#adGym', body).value = hg.name;
+          var hg = P.Store.gymName(m.gymId);
+          if (hg) U.$('#adGym', body).value = hg;
           var age = P.Model.ageAt(m.dob) || m.ageStated;
           if (age) U.$('#adAge', body).value = age;
           var last = P.Store.latestSession(m.id);
