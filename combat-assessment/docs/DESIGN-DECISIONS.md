@@ -234,6 +234,67 @@ depth did not go anywhere — gym view, database, benchmarks, protocol and
 settings all still exist, behind More, because they are what a coach uses
 between testing days rather than during one.
 
+## 11c. What the coach actually reads off the console
+
+The first build asked for numbers a coach does not have. It wanted the average
+watts of a twelve-minute effort, the peak *and* the mean of a thirty-second
+sprint, and both the peak and the within-sprint average of every repeated
+sprint — figures that either require a console that does not report them or
+require arithmetic in the middle of a testing day.
+
+The tests now ask for what is on the screen at the moment you look at it:
+
+- **12-minute test:** the watts showing at each of the twelve minute marks,
+  plus total distance. The app takes the average. It also reports the
+  second-half fade, because an athlete who held the number and one who died in
+  the last four minutes can post the same average and did not do the same test.
+- **30-second sprint:** the watts at 10 s, 20 s and 30 s. Peak, mean and
+  minimum all fall out of those three, which is what finally makes the fatigue
+  index computable — the previous version had to report it as not computable on
+  any console that does not expose a minimum.
+- **Repeated sprint:** the maximum watts of each sprint, one number per sprint.
+  The app calculates the average, the best sprint and the loss of watts.
+  Because the benchmarked metric moved from within-sprint averages to sprint
+  peaks, the reference anchors were raised about 17% to match; the provisional
+  set says so in its notes.
+- **Weighted chin-up:** the heaviest load for one strict repetition. It was a
+  3RM run through a prediction equation, which was a strange thing to do to a
+  test whose whole point is a maximal single. There is now no equation:
+  relative system mass is (body mass + load) / body mass.
+
+Standing and single-leg broad jumps are recorded in **metres**, because that is
+what the tape says.
+
+## 11d. Two tests removed
+
+**The rotational medicine-ball throw.** Throw distance depends so heavily on
+release angle and on how strictly the feet are held that the number carries
+more noise than signal, and its reference anchors were the weakest in the file
+— flagged as such when they were written. Keeping a test that needs three
+paragraphs of caveats is worse than not having it.
+
+**The movement observation screen.** It was coach observation sitting in a
+report full of benchmarked results, which is an invitation to read it as one.
+Inter-rater reliability is poor, there is no defensible reference population,
+and the published evidence for screens as injury-prediction tools is weak. It
+was scored against a criterion with its own labels precisely so it would not be
+mistaken for a percentile — at which point the honest move is to take it out
+rather than keep defending it. The criterion-scoring mechanism stays in the
+engine, unused, because any future observation-based measure needs exactly that
+treatment rather than a fabricated percentile.
+
+Power is now the countermovement jump, the standing broad jump and the
+single-leg broad jump. Six categories, eleven tests.
+
+## 11e. The athlete's gym, not the venue
+
+Sessions record where the testing happened; athletes record which gym they are
+*from*. They are usually the same and the add-athlete form defaults one to the
+other, but they come apart the moment someone travels in for a testing day —
+and "send the gym their results" means the results of that gym's athletes,
+wherever they were measured. The gym dashboard and the report filter both key
+on the athlete's own gym for that reason.
+
 ## 12. No server, and how the data survives anyway
 
 No backend, no account, no database service: the app works in a basement gym

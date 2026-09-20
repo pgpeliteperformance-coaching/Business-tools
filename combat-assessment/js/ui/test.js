@@ -188,8 +188,18 @@
         '<div class="field"><label>Age</label><input class="big" type="number" id="adAge"></div>' +
         '<div class="field"><label>Body mass (kg)</label><input class="big" type="number" step="0.1" id="adMass"></div>' +
         '</div>' +
+        '<div class="grid g2">' +
         '<div class="field"><label>Sport</label><select id="adSport">' +
         U.selectOpts(P.Model.SPORTS, 'mma') + '</select></div>' +
+        '<div class="field"><label>Their gym</label>' +
+        '<input type="text" id="adGym" list="gymList2" value="' + U.esc(day.gym) +
+        '" placeholder="Who they train with" autocomplete="off">' +
+        '<datalist id="gymList2">' + (P.Store.db.gyms || []).map(function (g) {
+          return '<option value="' + U.esc(g.name) + '">';
+        }).join('') + '</datalist>' +
+        '<div class="hint">Defaults to where you are today. Change it if they have come in from another gym — ' +
+        'this is what groups their report when you send a gym its athletes\' results.</div></div>' +
+        '</div>' +
         '<div class="fineprint">Sex and body mass are the two that matter: reference sets are sex-specific, and most ' +
         'results are expressed per kilogram. Everything else can wait.</div>',
       buttons: [
@@ -197,18 +207,20 @@
         { label: 'Start testing', class: 'btn-primary', onClick: function () {
           var name = U.$('#adName').value.trim();
           if (!name) { U.toast('Give them a name'); return true; }
+          var homeGym = gymIdFor(U.$('#adGym').value) || gymIdFor(day.gym);
           var existing = matchAthlete(name);
           var a;
           if (existing) {
             a = existing;
             if (!a.sex && U.$('#adSex').value) a.sex = U.$('#adSex').value;
+            if (homeGym) a.gymId = homeGym;
             S.upsertAthlete(a);
           } else {
             a = P.Model.newAthlete({
               name: name, sex: U.$('#adSex').value || null,
               ageStated: U.numVal(U.$('#adAge')),
               sport: U.$('#adSport').value,
-              gymId: gymIdFor(day.gym), coach: '',
+              gymId: homeGym, coach: '',
               athleteNumber: todaySessions().length + 1
             });
             S.upsertAthlete(a);
@@ -229,6 +241,8 @@
             'Their sex, age and sport are already on file.</div>';
           if (m.sex) U.$('#adSex', body).value = m.sex;
           if (m.sport) U.$('#adSport', body).value = m.sport;
+          var hg = P.Store.gym(m.gymId);
+          if (hg) U.$('#adGym', body).value = hg.name;
           var age = P.Model.ageAt(m.dob) || m.ageStated;
           if (age) U.$('#adAge', body).value = age;
           var last = P.Store.latestSession(m.id);

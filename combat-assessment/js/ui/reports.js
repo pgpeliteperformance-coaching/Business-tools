@@ -16,6 +16,8 @@
   }
 
   /* ====================== PICKER ====================== */
+  var gymFilter = '';
+
   function renderPicker(mount) {
     var S = P.Store;
     var sessions = (S.db.sessions || []).slice().sort(function (a, b) {
@@ -23,16 +25,30 @@
     });
     var html = '<div class="pg-head"><h1 class="pg-title">Reports</h1>' +
       '<p class="pg-sub">Pick a testing session to open its athlete report. Reports print to a clean A4 PDF ' +
-      'from the browser\'s print dialog.</p></div>';
+      'from the browser\'s print dialog. Filter by gym to work through one gym\'s athletes in a run.</p></div>';
     if (!sessions.length) {
       html += '<div class="card">' + U.empty('No sessions yet', 'Run an athlete through the battery first.') + '</div>';
       mount.innerHTML = html; return;
     }
+    /* Filter on the athlete's OWN gym, not where they happened to be tested:
+       sending a gym its results means sending it the results of its athletes. */
+    var filtered = sessions.filter(function (s) {
+      if (!gymFilter) return true;
+      var a = S.athlete(s.athleteId);
+      return a && a.gymId === gymFilter;
+    });
+    html += '<div class="searchbar"><select id="rpGym" style="flex:0 1 260px">' +
+      U.selectOpts((S.db.gyms || []).map(function (g) { return { id: g.id, label: g.name }; }),
+        gymFilter, 'All gyms') + '</select>' +
+      (gymFilter ? '<span class="fineprint">' + filtered.length + ' report' +
+        (filtered.length === 1 ? '' : 's') + ' for ' + U.esc((S.gym(gymFilter) || {}).name || '') +
+        ' — open each one and print it to PDF.</span>' : '') + '</div>';
+
     html += '<div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr>' +
-      '<th>Date</th><th>Athlete</th><th>Sport</th><th>Gym</th><th class="num">Mass</th>' +
+      '<th>Date</th><th>Athlete</th><th>Sport</th><th>Their gym</th><th class="num">Mass</th>' +
       '<th>Protocol</th><th></th></tr></thead><tbody>';
-    sessions.forEach(function (s) {
-      var a = S.athlete(s.athleteId), g = S.gym(s.gymId);
+    filtered.forEach(function (s) {
+      var a = S.athlete(s.athleteId), g = a ? S.gym(a.gymId) : null;
       html += '<tr class="row-link" data-s="' + U.esc(s.id) + '"><td>' + U.date(s.date) + '</td>' +
         '<td><b>' + U.esc(a ? a.name : 'Unknown') + '</b></td>' +
         '<td class="dim">' + U.esc(a ? U.sportLabel(a.sport) : '—') + '</td>' +
@@ -43,6 +59,8 @@
     });
     html += '</tbody></table></div></div>';
     mount.innerHTML = html;
+    var gf = U.$('#rpGym', mount);
+    if (gf) gf.addEventListener('change', function () { gymFilter = gf.value; P.App.render(); });
     U.$$('tr.row-link', mount).forEach(function (r) {
       r.addEventListener('click', function () {
         var s = S.session(r.dataset.s);
@@ -465,11 +483,10 @@
   function absoluteFor(t, r) {
     var map = {
       trapbar: ['load_kg', 'reps'], bench: ['load_kg', 'reps'],
-      weighted_chinup: ['added_kg', 'reps'], bike_12min: ['mean_watts'],
-      bike_30s: ['peak_watts', 'mean_watts'], bike_repeated: ['mean_mean_watts'],
-      cmj: ['height_cm'], broad_jump: ['distance_cm'], sl_broad_jump: ['best_cm'],
-      mb_throw: ['ball_mass_kg', 'best_cm'], sprint_10m: ['time_10m_s'], chinup: ['reps'],
-      movement_screen: []
+      weighted_chinup: ['added_kg'], bike_12min: ['mean_watts', 'distance_km'],
+      bike_30s: ['peak_watts', 'mean_watts'], bike_repeated: ['best_peak_watts', 'mean_peak_watts'],
+      cmj: ['height_cm'], broad_jump: ['distance_m'], sl_broad_jump: ['best_m'],
+      sprint_10m: ['time_10m_s'], chinup: ['reps']
     };
     var keys = map[t.id] || [];
     var out = keys.map(function (k) {

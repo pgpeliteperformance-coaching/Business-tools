@@ -101,21 +101,26 @@ adopting those would change every percentile without telling you.
 
 ## The battery
 
-| # | Test | Category | Benchmarked metric |
-|---|------|----------|--------------------|
-| 1 | Countermovement jump | Power | Jump height (cm) |
-| 2 | Standing broad jump | Power | Distance (cm) |
-| 3 | Single-leg broad jump | Power | Best leg (cm) + L/R difference as an observation |
-| 4 | Rotational medicine-ball throw | Power | Best throw (cm), ball-mass specific |
-| 5 | 10 m sprint | Speed | Best 10 m time (electronic timing only) |
-| 6 | Trap-bar deadlift | Strength | Estimated 1RM ÷ body mass |
-| 7 | Strict chin-ups | Strength | Valid reps, against a body-mass band |
-| 8 | Weighted chin-up *(optional)* | Strength | Relative system mass (× BW) |
-| 9 | Bench press *(optional)* | Strength | Estimated 1RM ÷ body mass |
-| 10 | 12-minute air-bike test | Aerobic capacity | Average W/kg |
-| 11 | 30-second air-bike sprint | Anaerobic power | Peak and mean W/kg |
-| 12 | Repeated sprint, 6 × 15 s / 45 s | Repeated effort | Mean sprint W/kg + decrement |
-| 13 | Movement screen *(optional)* | Movement | Criterion score, **not** a percentile |
+Eleven tests across six categories.
+
+| # | Test | Category | What you write down | Benchmarked metric |
+|---|------|----------|---------------------|--------------------|
+| 1 | Countermovement jump | Power | 3 attempts, cm | Best jump height |
+| 2 | Standing broad jump | Power | 3 attempts, **metres** | Best distance |
+| 3 | Single-leg broad jump | Power | Left and right, **metres** | Best leg, plus L/R difference as an observation |
+| 4 | 10 m sprint | Speed | 3 attempts, s | Best time (electronic timing only) |
+| 5 | Trap-bar deadlift | Strength | Load × reps (3RM default) | Estimated 1RM ÷ body mass |
+| 6 | Strict chin-ups | Strength | Valid reps | Reps, against a body-mass band |
+| 7 | Weighted chin-up *(optional)* | Strength | **Added load for one strict rep** | (body mass + load) ÷ body mass — a tested 1RM, no equation |
+| 8 | Bench press *(optional)* | Strength | Load × reps (3RM default) | Estimated 1RM ÷ body mass |
+| 9 | 12-minute air-bike test | Aerobic capacity | **Watts at each of the 12 minutes**, plus total distance | Average W/kg. Second-half fade reported as an observation |
+| 10 | 30-second air-bike sprint | Anaerobic power | **Watts at 10 s, 20 s and 30 s** | Peak and mean W/kg. Fatigue index falls out of the three readings |
+| 11 | Repeated sprint, 6 × 15 s / 45 s | Repeated effort | **Max watts for each sprint, nothing else** | Average sprint W/kg + loss of watts % |
+
+Two tests were removed after the first build: the rotational medicine-ball
+throw (too technique-dependent for the number to mean much) and the movement
+observation screen (coach observation rather than measurement, and it invited
+being read as a benchmarked result). See `docs/DESIGN-DECISIONS.md`.
 
 The full written protocol for every test — purpose, equipment, set-up, warm-up,
 what to say, attempts, rest, what to record, calculation, common errors, stop
@@ -129,7 +134,10 @@ There is one screen. It opens on it.
 
 1. **Type the gym name** at the top. That is the whole setup — no gym to create,
    no event to start. Next time it remembers where you were.
-2. **+ Add an athlete.** Name, sex, age, body mass. Start testing.
+2. **+ Add an athlete.** Name, sex, age, body mass, and **their gym** — which
+   defaults to where you are but can be changed for anyone visiting from
+   elsewhere. That is what groups a report when you send a gym its athletes'
+   results, and what the Reports page filters on.
 3. **Fill in the numbers** on one scrolling page. Every test is there; typing a
    value marks that test as done. Best-of-three works itself out.
 4. Anything you could not test: hit **Not tested** and pick a reason. It never

@@ -51,8 +51,11 @@
     return pickLevel(pct, levels);
   };
 
-  /* The movement screen is a criterion score, not a percentile, so it carries
-     its own labels — see settings.movement.criterionLevels for why. */
+  /* Criterion scoring: a score against a fixed standard rather than against
+     other athletes, carrying its own labels so nothing reads as a percentile.
+     No test in the current battery uses it — the movement screen did, and was
+     removed — but the mechanism is kept because any future observation-based
+     measure needs exactly this treatment rather than a fabricated percentile. */
   E.calculateCriterionLevel = function (score, settings) {
     if (score === null || score === undefined || !isFinite(score)) return null;
     var s = st(settings);
@@ -180,7 +183,6 @@
     var v = (result && result.values) || {};
     var c = {};
     if (def && def.durationS) c.durationS = def.durationS;
-    if (testId === 'mb_throw') c.ballMassKg = Calc.num(v.ball_mass_kg);
     if (def && def.equipmentDependent) c.machineFamily = Settings.bikeFamily(eq.airBike);
     if (testId === 'sprint_10m') {
       c.timingMethod = (eq.timingDevice === 'handheld' || eq.timingMethod === 'hand')
@@ -555,7 +557,7 @@
       return out;
     }
 
-    /* A criterion-scored category (movement) is not a percentile and is not
+    /* A criterion-scored category is not a percentile and is not
        averaged on the z scale. */
     var allCriterion = contributing.every(function (m) { return m.scoreType === 'criterion'; });
     if (allCriterion) {
@@ -725,7 +727,7 @@
       },
       selectionRule: 'Each test contributes at most one entry to each list. A quality is reported as a strength only at or above the ' +
         p.strengthMinPercentile + 'th percentile, and as a development priority only at or below the ' +
-        p.priorityMaxPercentile + 'th. Results between those points are not far enough from the middle of the reference population to be called either. Tests that were not performed, values awaiting verification, and the criterion-scored movement screen are excluded from both lists. Ordering also accounts for how reliable each test is and how confident the reference set is — it is not a simple sort on the percentile.'
+        p.priorityMaxPercentile + 'th. Results between those points are not far enough from the middle of the reference population to be called either. Tests that were not performed and values awaiting verification are excluded from both lists. Ordering also accounts for how reliable each test is and how confident the reference set is — it is not a simple sort on the percentile.'
     };
   };
 
@@ -1016,7 +1018,9 @@
     (db.sessions || []).forEach(function (sess) {
       var a = athletes[sess.athleteId];
       if (!a || a.archived) return;
-      if (filters.gymId && sess.gymId !== filters.gymId) return;
+      /* The athlete's own gym, not the venue they were tested at: a gym's
+         report is about its athletes, wherever the testing happened. */
+      if (filters.gymId && a.gymId !== filters.gymId) return;
       if (filters.sport && a.sport !== filters.sport) return;
       if (filters.sex && a.sex !== filters.sex) return;
       if (filters.level && a.competitiveLevel !== filters.level) return;
@@ -1058,7 +1062,7 @@
         categoryId: c.id, categoryName: c.name, short: c.short,
         n: vals.length, mean: Stats.mean(vals), sd: Stats.sd(vals),
         min: Stats.min(vals), max: Stats.max(vals),
-        levelCounts: levelCounts, scoreType: c.id === 'movement' ? 'criterion' : 'percentile'
+        levelCounts: levelCounts, scoreType: 'percentile'
       };
     });
 

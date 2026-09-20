@@ -173,15 +173,10 @@
         break;
 
       case 'sl_broad_jump':
-      case 'mb_throw':
         if (Calc.num(v.asymmetry_pct) !== null && v.asymmetry_pct > 25) {
           out.push(issue('verify', testId, 'asymmetry_pct',
             'A difference of ' + v.asymmetry_pct.toFixed(1) +
-            '% between sides is large enough to suggest a recording error or a technique problem on one side. Please verify both values before interpreting the difference.'));
-        }
-        if (testId === 'mb_throw' && Calc.num(v.ball_mass_kg) === null) {
-          out.push(issue('error', testId, 'ball_mass_kg',
-            'Medicine-ball mass is required. Throw distances from different ball masses are not comparable and cannot be benchmarked without it.'));
+            '% between legs is large enough to suggest a recording error or a technique problem on one side. Please verify both values before interpreting the difference.'));
         }
         break;
 
@@ -241,6 +236,11 @@
         break;
 
       case 'bike_12min':
+        if (v._minutesRecorded !== undefined && v._minutesRecorded < v._minutesExpected) {
+          out.push(issue('verify', testId, 'mean_watts',
+            'Only ' + v._minutesRecorded + ' of the ' + v._minutesExpected +
+            ' minute readings were recorded. The average is taken from the readings you have — a missed minute is left out, not counted as zero — but the fewer readings there are, the less the average means.'));
+        }
         if (result.status === 'incomplete') {
           out.push(issue('info', testId, 'status',
             'Test recorded as INCOMPLETE. A partial 12-minute test is not benchmarked, because average power over a shorter duration is not comparable.'));
@@ -251,19 +251,20 @@
         }
         break;
 
+        /* falls through to the shared 12-minute checks below */
+
       case 'bike_30s': {
-        var pk = Calc.num(v.peak_watts), mn = Calc.num(v.mean_watts), lo = Calc.num(v.min_watts);
-        if (pk !== null && mn !== null && mn > pk) {
-          out.push(issue('error', testId, 'mean_watts',
-            'Mean power cannot exceed peak power. Please verify these values — the most common cause is reading the two figures from the wrong console fields.'));
+        /* Peak, mean and minimum are derived from the three readings, so they
+           cannot contradict one another. What can go wrong is a missing or
+           mistyped reading. */
+        var got = (def.splitSamples || []).filter(function (k) { return Calc.num(v[k]) !== null; });
+        if (got.length && got.length < (def.splitSamples || []).length) {
+          out.push(issue('verify', testId, 'w_0_10',
+            'Only ' + got.length + ' of the three ten-second readings were recorded. Peak, mean and the fatigue index are all taken from those readings, so the result is weaker than it looks.'));
         }
-        if (lo !== null && pk !== null && lo > pk) {
-          out.push(issue('error', testId, 'min_watts',
-            'Minimum power cannot exceed peak power. Please verify these values.'));
-        }
-        if (lo === null) {
-          out.push(issue('info', testId, 'fatigue_index_pct',
-            'Fatigue index not computable: this console did not provide a minimum power value. No substitute calculation has been used.'));
+        if (Calc.num(v.w_0_10) !== null && Calc.num(v.w_20_30) !== null && v.w_20_30 > v.w_0_10) {
+          out.push(issue('verify', testId, 'w_20_30',
+            'Power was higher in the last ten seconds than the first. In an all-out 30-second effort that almost always means the athlete paced the start. Please verify the readings, and consider retesting.'));
         }
         break;
       }
@@ -280,37 +281,17 @@
         if (v._setComplete === false && v._sprintsRecorded > 0) {
           out.push(issue('info', testId, 'status', v._partialNote));
         }
-        (result.sprints || []).forEach(function (s, i) {
-          if (!s) return;
-          var p = Calc.num(s.peak_watts), m = Calc.num(s.mean_watts);
-          if (p !== null && m !== null && m > p) {
-            out.push(issue('error', testId, 'sprints.' + i,
-              'Sprint ' + (i + 1) + ': mean power (' + m + ' W) exceeds peak power (' + p +
-              ' W). Please verify these values.'));
-          }
-        });
+
         /* A rising power profile means the first sprint was paced, which
            corrupts the decrement score. */
         if (Calc.num(v.slope_w_per_sprint) !== null && v.slope_w_per_sprint > 2) {
           out.push(issue('verify', testId, 'decrement_pct',
             'Power INCREASED across the set (' + v.slope_w_per_sprint.toFixed(1) +
-            ' W per sprint). This almost always means the first sprint was paced rather than maximal, which makes the decrement score look better than it is. Read it alongside mean sprint power, and consider retesting.'));
+            ' W per sprint). This almost always means the first sprint was paced rather than maximal, which makes the loss-of-watts figure look better than it is. Read it alongside the average sprint, and consider retesting.'));
         }
         break;
       }
 
-      case 'movement_screen':
-        if (v._itemsScored !== undefined && v._itemsTotal !== undefined &&
-            v._itemsScored < v._itemsTotal) {
-          out.push(issue('info', testId, 'items',
-            v._itemsScored + ' of ' + v._itemsTotal +
-            ' items were scored. Unscored items are excluded from the calculation entirely — they are NOT counted as zero.'));
-        }
-        if (!result.assessor) {
-          out.push(issue('verify', testId, 'assessor',
-            'No assessor recorded. Movement screen scores have low inter-rater reliability and are not comparable between assessors, so the assessor must be recorded for the retest comparison to mean anything.'));
-        }
-        break;
     }
     return out;
   };

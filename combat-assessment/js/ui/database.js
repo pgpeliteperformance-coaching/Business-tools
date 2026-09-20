@@ -96,8 +96,8 @@
       'bench and bar mass, chin-up bar, bike seat position), readiness answers and flag, protocol confirmation, ' +
       'session notes, injury notes, completion flag, created and updated timestamps.</p>' +
       '<h4>TestResult (one per test, per session)</h4><p>Status (tested / incomplete / not tested), reason, every ' +
-      'attempt, raw entries, all calculated metrics, per-sprint values for the repeated-sprint test, per-item scores ' +
-      'for the movement screen, the protocol configuration actually used, assessor, notes.</p>' +
+      'attempt, raw entries, all calculated metrics, the maximum watts for each sprint in the repeated-sprint test, ' +
+      'the protocol configuration actually used, and notes.</p>' +
       '<h4>Benchmark</h4><p>Test, metric, reference type, sex, age range, body-mass band, population, sport, level, ' +
       'direction, unit, protocol conditions, method, band anchors or distribution or percentile table, sample size, ' +
       'protocol string, source with a verified flag, confidence, date added, notes.</p>' +

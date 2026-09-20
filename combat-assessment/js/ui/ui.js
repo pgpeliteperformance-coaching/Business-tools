@@ -86,10 +86,7 @@
 
   /* ---- level badge ----------------------------------------------------- */
   U.levelIndex = function (levelName) {
-    var i = ['DEVELOPING', 'TRAINED', 'ADVANCED', 'HIGH PERFORMANCE'].indexOf(levelName);
-    if (i > -1) return i + 1;
-    var j = ['LIMITATIONS NOTED', 'MONITOR', 'ACCEPTABLE', 'FULL RANGE OBSERVED'].indexOf(levelName);
-    return j > -1 ? j + 1 : 0;
+    return ['DEVELOPING', 'TRAINED', 'ADVANCED', 'HIGH PERFORMANCE'].indexOf(levelName) + 1;
   };
   U.levelBadge = function (level) {
     if (!level) return '<span class="badge badge-none">Not scored</span>';

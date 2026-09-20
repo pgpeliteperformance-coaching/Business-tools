@@ -276,25 +276,7 @@
     };
   };
 
-  /* ===== 6. MOVEMENT SCREEN ============================================== */
-
-  /* Movement screen total as a percentage of the achievable maximum, counting
-     only items that were actually scored. Coach-observation data: it is NOT
-     a percentile against a reference population and NOT a medical finding. */
-  C.movementScorePct = function (scores, maxPerItem) {
-    var mx = num(maxPerItem) || 2;
-    var vals = [], keys = Object.keys(scores || {});
-    for (var i = 0; i < keys.length; i++) {
-      var s = num(scores[keys[i]]);
-      if (s !== null) vals.push(s);
-    }
-    if (!vals.length) return null;
-    var total = vals.reduce(function (a, b) { return a + b; }, 0);
-    return { scored: vals.length, total: total, max: vals.length * mx,
-             pct: total / (vals.length * mx) * 100 };
-  };
-
-  /* ===== 7. CHANGE / RETEST ============================================== */
+  /* ===== 6. CHANGE / RETEST ============================================== */
 
   C.calculateChange = function (current, previous) {
     var c = num(current), p = num(previous);

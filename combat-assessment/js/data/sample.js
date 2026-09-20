@@ -77,14 +77,12 @@
     if (d.cmj) set('cmj', {}, { attempts: { height_cm: d.cmj } });
     else if (d.cmjSkip) skip('cmj', d.cmjSkip[0], d.cmjSkip[1]);
 
-    if (d.bj) set('broad_jump', {}, { attempts: { distance_cm: d.bj } });
+    if (d.bj) set('broad_jump', {}, { attempts: { distance_m: d.bj } });
     else if (d.bjSkip) skip('broad_jump', d.bjSkip[0], d.bjSkip[1]);
 
-    if (d.slbj) set('sl_broad_jump', { left_cm: d.slbj[0], right_cm: d.slbj[1] });
+    if (d.slbj) set('sl_broad_jump', { left_m: d.slbj[0], right_m: d.slbj[1] });
     else if (d.slbjSkip) skip('sl_broad_jump', d.slbjSkip[0], d.slbjSkip[1]);
 
-    if (d.mb) set('mb_throw', { ball_mass_kg: d.mb[0], left_cm: d.mb[1], right_cm: d.mb[2] });
-    else if (d.mbSkip) skip('mb_throw', d.mbSkip[0], d.mbSkip[1]);
 
     if (d.sprint) set('sprint_10m', d.sprint.extra || {}, { attempts: { time_10m_s: d.sprint.attempts } });
     else if (d.sprintSkip) skip('sprint_10m', d.sprintSkip[0], d.sprintSkip[1]);
@@ -96,33 +94,37 @@
     if (d.chin !== undefined) set('chinup', { reps: d.chin });
     else if (d.chinSkip) skip('chinup', d.chinSkip[0], d.chinSkip[1]);
 
-    if (d.wchin) set('weighted_chinup', { added_kg: d.wchin[0], reps: d.wchin[1] });
+    if (d.wchin) set('weighted_chinup', { added_kg: d.wchin });
     else if (d.wchinSkip) skip('weighted_chinup', d.wchinSkip[0], d.wchinSkip[1]);
 
     if (d.bench) set('bench', { load_kg: d.bench[0], reps: d.bench[1] });
     else if (d.benchSkip) skip('bench', d.benchSkip[0], d.benchSkip[1]);
 
-    if (d.aer) set('bike_12min', d.aer);
+    if (d.aer) {
+      /* aer is [mean watts, distance km]; the twelve minute boxes are filled
+         with a realistic fade around that mean so the sample exercises the
+         per-minute entry the way a real test would. */
+      var aw = {}, base = d.aer[0];
+      for (var mi = 1; mi <= 12; mi++) {
+        aw['min_' + mi] = Math.round(base * (1.045 - 0.0075 * (mi - 1)) + (mi % 3 === 0 ? 2 : -1));
+      }
+      if (d.aer[1]) aw.distance_km = d.aer[1];
+      if (d.aerHr) { aw.mean_hr = d.aerHr[0]; aw.peak_hr = d.aerHr[1]; }
+      set('bike_12min', aw);
+    }
     else if (d.aerSkip) skip('bike_12min', d.aerSkip[0], d.aerSkip[1]);
     if (d.aerIncomplete) { r.bike_12min.status = 'incomplete'; r.bike_12min.raw = d.aerIncomplete; }
 
-    if (d.ana) set('bike_30s', d.ana);
+    if (d.ana) set('bike_30s', { w_0_10: d.ana[0], w_10_20: d.ana[1], w_20_30: d.ana[2] });
     else if (d.anaSkip) skip('bike_30s', d.anaSkip[0], d.anaSkip[1]);
 
     if (d.rep) {
       r.bike_repeated.status = 'tested';
       r.bike_repeated.config = d.repConfig || { sprints: 6, workS: 15, recoveryS: 45 };
-      r.bike_repeated.sprints = d.rep.map(function (p) {
-        return { peak_watts: p[0], mean_watts: p[1] };
-      });
+      r.bike_repeated.sprints = d.rep.map(function (p) { return { peak_watts: p }; });
+      /* d.rep is a flat list of maximum watts, one per sprint. */
     } else if (d.repSkip) skip('bike_repeated', d.repSkip[0], d.repSkip[1]);
 
-    if (d.movement) {
-      r.movement_screen.status = 'tested';
-      r.movement_screen.items = d.movement;
-      r.movement_screen.assessor = spec.tester || 'Paolo Prato';
-      r.movement_screen.notes = d.movementNote || '';
-    } else if (d.movementSkip) skip('movement_screen', d.movementSkip[0], d.movementSkip[1]);
 
     return Model.deriveSession(s);
   }
@@ -160,21 +162,19 @@
       notes: 'Baseline assessment. First exposure to the 12-minute bike test — pacing was conservative in the first half, so the aerobic result is likely an underestimate. Strength testing was the athlete\'s first time under meaningful load.',
       data: {
         cmj: [37.2, 38.5, 37.9],
-        bj: [212, 216, 214],
-        slbj: [150, 156],
-        mb: [4, 598, 626],
+        bj: [2.12, 2.16, 2.14],
+        slbj: [1.50, 1.56],
         sprint: { attempts: [1.88, 1.86, 1.87], extra: { time_20m_s: 3.19 } },
         trapbar: [120, 3], trapbarNote: 'Technique competent but tentative under load. High handles.',
         chin: 11,
-        wchin: [7.5, 3],
+        wchin: 6,
         bench: [80, 3],
-        aer: { mean_watts: 165, calories: 149, mean_hr: 174, peak_hr: 188 },
-        ana: { peak_watts: 1150, mean_watts: 770, min_watts: 570 },
-        rep: [[831, 710], [784, 670], [749, 640], [713, 610], [684, 585], [655, 560]],
+        aer: [165, 4.9], aerHr: [174, 188],
+        ana: [1150, 905, 700],
+        rep: [831, 784, 749, 713, 684, 655],
         movement: { ankle_df_l: 1, ankle_df_r: 1, hip_ir_l: 1, hip_ir_r: 2,
                     hip_er_l: 2, hip_er_r: 2, shoulder_flex_l: 2, shoulder_flex_r: 1,
                     thoracic_rot_l: 1, thoracic_rot_r: 2, sl_squat_l: 2, sl_squat_r: 2 },
-        movementNote: 'Both ankles restricted in knee-to-wall. Left thoracic rotation the more limited side.'
       }
     }));
 
@@ -185,21 +185,19 @@
       notes: 'Retest after a 13-week block emphasising maximal strength and aerobic development. Second exposure to the 12-minute test, so pacing was better than at baseline — some of the aerobic change reflects that rather than adaptation.',
       data: {
         cmj: [42.9, 44.2, 43.6],
-        bj: [228, 232, 230],
-        slbj: [162, 169],
-        mb: [4, 695, 728],
+        bj: [2.28, 2.32, 2.30],
+        slbj: [1.62, 1.69],
         sprint: { attempts: [1.79, 1.76, 1.78], extra: { time_20m_s: 3.06 } },
         trapbar: [147.5, 3], trapbarNote: 'Technique competent and noticeably more confident under load.',
         chin: 15,
-        wchin: [15, 3],
+        wchin: 12,
         bench: [90, 3],
-        aer: { mean_watts: 200, calories: 181, mean_hr: 177, peak_hr: 190 },
-        ana: { peak_watts: 1252, mean_watts: 836, min_watts: 620 },
-        rep: [[936, 800], [878, 750], [837, 715], [796, 680], [761, 650], [731, 625]],
+        aer: [200, 5.9], aerHr: [177, 190],
+        ana: [1252, 985, 760],
+        rep: [936, 878, 837, 796, 761, 731],
         movement: { ankle_df_l: 2, ankle_df_r: 1, hip_ir_l: 1, hip_ir_r: 2,
                     hip_er_l: 2, hip_er_r: 2, shoulder_flex_l: 2, shoulder_flex_r: 2,
                     thoracic_rot_l: 2, thoracic_rot_r: 2, sl_squat_l: 2, sl_squat_r: 2 },
-        movementNote: 'Left ankle improved with daily dorsiflexion work. Right ankle unchanged.'
       }
     }));
 
@@ -245,9 +243,8 @@
         age: 22 + (i % 12),
         data: {
           cmj: [jitter(rand, 38 * f * k, 2, 1), jitter(rand, 39.5 * f * k, 2, 1), jitter(rand, 39 * f * k, 2, 1)],
-          bj: [jitter(rand, 218 * f * k, 8, 0), jitter(rand, 224 * f * k, 8, 0), jitter(rand, 221 * f * k, 8, 0)],
-          slbj: [jitter(rand, 158 * f * k, 9, 0), jitter(rand, 163 * f * k, 9, 0)],
-          mb: [female ? 3 : 4, jitter(rand, (female ? 495 : 645) * k, 45, 0), jitter(rand, (female ? 515 : 672) * k, 45, 0)],
+          bj: [jitter(rand, 2.18 * f * k, .08, 2), jitter(rand, 2.24 * f * k, .08, 2), jitter(rand, 2.21 * f * k, .08, 2)],
+          slbj: [jitter(rand, 1.58 * f * k, .09, 2), jitter(rand, 1.63 * f * k, .09, 2)],
           sprint: { attempts: [jitter(rand, (female ? 2.00 : 1.83) / k, 0.05, 2),
                                jitter(rand, (female ? 1.98 : 1.81) / k, 0.05, 2),
                                jitter(rand, (female ? 1.99 : 1.82) / k, 0.05, 2)] },
@@ -256,23 +253,18 @@
           bench: (i % 3 === 0) ? [Math.round(bw * (female ? 0.72 : 1.12) * k / 2.5) * 2.5, 3] : null,
           benchSkip: (i % 3 === 0) ? null : ['equipment', 'No bench available at this facility.'],
           wchinSkip: ['time', 'Optional test — not run on this testing day.'],
-          aer: { mean_watts: Math.round(bw * (female ? 2.2 : 2.6) * k), mean_hr: Math.round(jitter(rand, 174, 8, 0)) },
-          ana: { peak_watts: Math.round(bw * (female ? 10.2 : 12.8) * k),
-                 mean_watts: Math.round(bw * (female ? 7.0 : 9.1) * k) },
+          chinSkip: null,
+          aer: [Math.round(bw * (female ? 2.2 : 2.6) * k), jitter(rand, female ? 5.0 : 5.8, .5, 2)],
+          aerHr: [Math.round(jitter(rand, 174, 8, 0)), Math.round(jitter(rand, 188, 6, 0))],
+          ana: (function () {
+            var pk = bw * (female ? 10.2 : 12.8) * k;
+            return [Math.round(pk), Math.round(pk * 0.82), Math.round(pk * 0.66)];
+          })(),
           rep: (function () {
-            var base = bw * (female ? 7.6 : 10.0) * k, out = [], dec = 0.965 + (ability * 0.02);
-            for (var q = 0; q < 6; q++) {
-              var mw = Math.round(base * Math.pow(dec, q));
-              out.push([Math.round(mw * 1.16), mw]);
-            }
+            var base = bw * (female ? 8.8 : 11.6) * k, out = [], dec = 0.965 + (ability * 0.02);
+            for (var q = 0; q < 6; q++) out.push(Math.round(base * Math.pow(dec, q)));
             return out;
           })(),
-          movement: { ankle_df_l: (i % 3 === 0) ? 1 : 2, ankle_df_r: (i % 4 === 0) ? 1 : 2,
-                      hip_ir_l: (i % 5 === 0) ? 1 : 2, hip_ir_r: 2,
-                      hip_er_l: 2, hip_er_r: 2,
-                      shoulder_flex_l: (i % 6 === 0) ? 1 : 2, shoulder_flex_r: 2,
-                      thoracic_rot_l: (i % 3 === 1) ? 1 : 2, thoracic_rot_r: 2,
-                      sl_squat_l: (i % 7 === 0) ? 1 : 2, sl_squat_r: 2 }
         }
       }));
     });
@@ -316,14 +308,11 @@
     db.sessions.push(mk({ athleteId: A.id, gymId: gym.id, date: '2026-09-01',
       bw: 77.0, ht: 178, age: 28, notes: 'QC fixture A — mid-range results.',
       data: {
-        cmj: [38.0, 39.5, 38.8], bj: [220, 224, 222], slbj: [158, 164],
-        mb: [4, 630, 665], sprint: { attempts: [1.83, 1.81, 1.82] },
+        cmj: [38.0, 39.5, 38.8], bj: [2.20, 2.24, 2.22], slbj: [1.58, 1.64],
+        sprint: { attempts: [1.83, 1.81, 1.82] },
         trapbar: [145, 3], chin: 12, bench: [88, 3],
-        aer: { mean_watts: 200 }, ana: { peak_watts: 985, mean_watts: 700, min_watts: 540 },
-        rep: [[950, 820], [925, 795], [900, 772], [880, 752], [860, 735], [845, 722]],
-        movement: { ankle_df_l: 2, ankle_df_r: 2, hip_ir_l: 2, hip_ir_r: 2, hip_er_l: 2,
-                    hip_er_r: 2, shoulder_flex_l: 2, shoulder_flex_r: 2, thoracic_rot_l: 1,
-                    thoracic_rot_r: 2, sl_squat_l: 2, sl_squat_r: 2 }
+        aer: [200, 5.6], ana: [985, 800, 620],
+        rep: [950, 925, 900, 880, 860, 845]
       } }));
 
     /* B — very high results */
@@ -332,14 +321,11 @@
     db.sessions.push(mk({ athleteId: B.id, gymId: gym.id, date: '2026-09-02',
       bw: 79.5, ht: 181, age: 29, notes: 'QC fixture B — top-end results, tests the upper extrapolation.',
       data: {
-        cmj: [54.0, 56.2, 55.1], bj: [268, 275, 271], slbj: [198, 204],
-        mb: [4, 880, 915], sprint: { attempts: [1.64, 1.62, 1.63] },
-        trapbar: [235, 3], chin: 26, wchin: [50, 3], bench: [145, 3],
-        aer: { mean_watts: 310 }, ana: { peak_watts: 1450, mean_watts: 980, min_watts: 780 },
-        rep: [[1380, 1180], [1362, 1160], [1340, 1145], [1325, 1130], [1310, 1118], [1298, 1108]],
-        movement: { ankle_df_l: 2, ankle_df_r: 2, hip_ir_l: 2, hip_ir_r: 2, hip_er_l: 2,
-                    hip_er_r: 2, shoulder_flex_l: 2, shoulder_flex_r: 2, thoracic_rot_l: 2,
-                    thoracic_rot_r: 2, sl_squat_l: 2, sl_squat_r: 2 }
+        cmj: [54.0, 56.2, 55.1], bj: [2.68, 2.75, 2.71], slbj: [1.98, 2.04],
+        sprint: { attempts: [1.64, 1.62, 1.63] },
+        trapbar: [235, 3], chin: 26, wchin: 42, bench: [145, 3],
+        aer: [310, 8.2], ana: [1450, 1180, 950],
+        rep: [1380, 1362, 1340, 1325, 1310, 1298]
       } }));
 
     /* C — very low results */
@@ -348,14 +334,11 @@
     db.sessions.push(mk({ athleteId: C.id, gymId: gym.id, date: '2026-09-03',
       bw: 74.0, ht: 175, age: 27, notes: 'QC fixture C — low-end results, tests the lower extrapolation and the clamp.',
       data: {
-        cmj: [24.0, 25.5, 24.8], bj: [172, 178, 175], slbj: [112, 121],
-        mb: [4, 395, 430], sprint: { attempts: [2.08, 2.05, 2.06] },
+        cmj: [24.0, 25.5, 24.8], bj: [1.72, 1.78, 1.75], slbj: [1.12, 1.21],
+        sprint: { attempts: [2.08, 2.05, 2.06] },
         trapbar: [82.5, 5], chin: 3, bench: [52.5, 5],
-        aer: { mean_watts: 128 }, ana: { peak_watts: 560, mean_watts: 420, min_watts: 280 },
-        rep: [[540, 455], [498, 418], [462, 388], [430, 362], [408, 342], [392, 328]],
-        movement: { ankle_df_l: 0, ankle_df_r: 1, hip_ir_l: 1, hip_ir_r: 1, hip_er_l: 1,
-                    hip_er_r: 2, shoulder_flex_l: 0, shoulder_flex_r: 1, thoracic_rot_l: 1,
-                    thoracic_rot_r: 1, sl_squat_l: 1, sl_squat_r: 1 }
+        aer: [128, 3.6], ana: [560, 430, 300],
+        rep: [540, 498, 462, 430, 408, 392]
       } }));
 
     /* D — missing tests for a range of legitimate reasons */
@@ -365,19 +348,14 @@
       notes: 'QC fixture D — small gym, no sprint space, no bike, no bench, sore shoulder. Confirms missing data is never treated as zero.',
       equipment: { airBike: 'unknown', timingDevice: 'unknown' },
       data: {
-        cmj: [40.0, 41.5, 40.9], bj: [226, 230, 228], slbj: [160, 166],
-        mb: [4, 650, 690],
+        cmj: [40.0, 41.5, 40.9], bj: [2.26, 2.30, 2.28], slbj: [1.60, 1.66],
         sprintSkip: ['facility', 'No straight run of 18 m available at this gym.'],
         trapbar: [155, 3],
         chinSkip: ['injury', 'Athlete reported right shoulder discomfort during the warm-up. Test not performed; referred on.'],
         benchSkip: ['equipment', 'No bench or spotter available.'],
         aerSkip: ['equipment', 'No air bike at this facility.'],
         anaSkip: ['equipment', 'No air bike at this facility.'],
-        repSkip: ['equipment', 'No air bike at this facility.'],
-        movement: { ankle_df_l: 2, ankle_df_r: 2, hip_ir_l: 2, hip_ir_r: 2, hip_er_l: 2,
-                    hip_er_r: 2, shoulder_flex_l: 1, shoulder_flex_r: null,
-                    thoracic_rot_l: 2, thoracic_rot_r: 2, sl_squat_l: 2, sl_squat_r: 2 },
-        movementNote: 'Right shoulder flexion not assessed because of reported discomfort. Left the item blank rather than scoring it.'
+        repSkip: ['equipment', 'No air bike at this facility.']
       },
       injuryNotes: 'Right shoulder discomfort reported on the day. Referred to a qualified medical professional. No diagnosis made or implied here.',
       readiness: { answers: { injury: 'yes', illness: 'no', fatigue: 'no', sparring: 'no',
@@ -391,14 +369,11 @@
       bw: 68.5, ht: 170, age: 29,
       notes: 'QC fixture E — female, above the light body-mass band, 3 kg ball. Confirms sex-specific and band-specific matching.',
       data: {
-        cmj: [31.0, 32.4, 31.8], bj: [192, 197, 195], slbj: [136, 142],
-        mb: [3, 520, 556], sprint: { attempts: [1.96, 1.94, 1.95] },
+        cmj: [31.0, 32.4, 31.8], bj: [1.92, 1.97, 1.95], slbj: [1.36, 1.42],
+        sprint: { attempts: [1.96, 1.94, 1.95] },
         trapbar: [110, 3], chin: 6, bench: [57.5, 3],
-        aer: { mean_watts: 158 }, ana: { peak_watts: 760, mean_watts: 540, min_watts: 430 },
-        rep: [[735, 620], [716, 602], [698, 586], [682, 572], [668, 560], [656, 550] ],
-        movement: { ankle_df_l: 2, ankle_df_r: 2, hip_ir_l: 2, hip_ir_r: 2, hip_er_l: 2,
-                    hip_er_r: 2, shoulder_flex_l: 2, shoulder_flex_r: 2, thoracic_rot_l: 2,
-                    thoracic_rot_r: 2, sl_squat_l: 2, sl_squat_r: 2 }
+        aer: [158, 4.5], ana: [760, 620, 500],
+        rep: [735, 716, 698, 682, 668, 656]
       } }));
 
     /* F — retest, including a protocol change on the repeated-sprint test */
@@ -406,28 +381,22 @@
     db.sessions.push(mk({ athleteId: F.id, gymId: gym.id, date: '2026-03-06',
       bw: 83.0, ht: 183, age: 30, notes: 'QC fixture F — baseline.',
       data: {
-        cmj: [36.0, 37.2, 36.6], bj: [214, 218, 216], slbj: [150, 157],
-        mb: [4, 610, 648], sprint: { attempts: [1.88, 1.86, 1.87] },
+        cmj: [36.0, 37.2, 36.6], bj: [2.14, 2.18, 2.16], slbj: [1.50, 1.57],
+        sprint: { attempts: [1.88, 1.86, 1.87] },
         trapbar: [150, 3], chin: 9, bench: [90, 3],
-        aer: { mean_watts: 196 }, ana: { peak_watts: 990, mean_watts: 705, min_watts: 545 },
-        rep: [[960, 826], [935, 800], [910, 778], [888, 758], [868, 740], [852, 727]],
-        movement: { ankle_df_l: 1, ankle_df_r: 1, hip_ir_l: 2, hip_ir_r: 2, hip_er_l: 2,
-                    hip_er_r: 2, shoulder_flex_l: 2, shoulder_flex_r: 2, thoracic_rot_l: 1,
-                    thoracic_rot_r: 1, sl_squat_l: 2, sl_squat_r: 2 }
+        aer: [196, 5.5], ana: [990, 805, 630],
+        rep: [960, 935, 910, 888, 868, 852]
       } }));
     db.sessions.push(mk({ athleteId: F.id, gymId: gym.id, date: '2026-09-06',
       bw: 84.2, ht: 183, age: 31,
       notes: 'QC fixture F — retest after 26 weeks. Repeated-sprint protocol was changed to 5 x 20 s / 60 s, which makes it a different test.',
       data: {
-        cmj: [39.5, 40.8, 40.1], bj: [222, 227, 224], slbj: [158, 164],
-        mb: [4, 645, 688], sprint: { attempts: [1.84, 1.82, 1.83] },
+        cmj: [39.5, 40.8, 40.1], bj: [2.22, 2.27, 2.24], slbj: [1.58, 1.64],
+        sprint: { attempts: [1.84, 1.82, 1.83] },
         trapbar: [172.5, 3], chin: 12, bench: [95, 3],
-        aer: { mean_watts: 228 }, ana: { peak_watts: 1035, mean_watts: 748, min_watts: 592 },
+        aer: [228, 6.3], ana: [1035, 840, 660],
         repConfig: { sprints: 5, workS: 20, recoveryS: 60 },
-        rep: [[1000, 858], [978, 836], [956, 818], [938, 802], [922, 790]],
-        movement: { ankle_df_l: 2, ankle_df_r: 1, hip_ir_l: 2, hip_ir_r: 2, hip_er_l: 2,
-                    hip_er_r: 2, shoulder_flex_l: 2, shoulder_flex_r: 2, thoracic_rot_l: 2,
-                    thoracic_rot_r: 1, sl_squat_l: 2, sl_squat_r: 2 }
+        rep: [1000, 978, 956, 938, 922]
       } }));
 
     /* G — invalid / implausible input throughout */
@@ -439,16 +408,14 @@
       equipment: { jumpDevice: 'unknown', airBike: 'unknown', trapBarMassKg: null,
                    timingDevice: 'handheld', timingMethod: 'hand' },
       data: {
-        cmj: [-5, 140, 42], bj: [900, 220, 225], slbj: [160, 40],
-        mb: [4, 3000, 600], sprint: { attempts: [0.2, 1.8, 1.9], extra: { time_20m_s: 0.15 } },
-        trapbar: [5000, 3], chin: 95, wchin: [0, 3], bench: [100, 25],
-        aer: { mean_watts: 2000, mean_hr: 200, peak_hr: 150 },
-        ana: { peak_watts: 500, mean_watts: 800, min_watts: 900 },
-        /* sprint 1 has mean above peak (an impossible reading) AND the set
-           rises across sprints, which is what a paced opening sprint looks
-           like — both must be caught. */
-        rep: [[500, 520], [600, 540], [650, 560], [700, 580], [750, 600], [800, 620]],
-        movement: { ankle_df_l: 2, ankle_df_r: 2 }
+        cmj: [-5, 140, 42], bj: [9.0, 2.20, 2.25], slbj: [1.60, 0.40],
+        sprint: { attempts: [0.2, 1.8, 1.9], extra: { time_20m_s: 0.15 } },
+        trapbar: [5000, 3], chin: 95, wchin: 0, bench: [100, 25],
+        aer: [2000, 60], aerHr: [200, 150],
+        /* the last ten seconds higher than the first is what a paced start
+           looks like, and the set rises across sprints for the same reason */
+        ana: [400, 600, 900],
+        rep: [500, 600, 650, 700, 750, 800]
       } }));
 
     db.isDemo = true;

@@ -111,17 +111,8 @@
         html += grid(n('flight_time_s', 'Optional') + n('contact_time_s', 'Optional'));
         break;
       case 'sl_broad_jump':
-        html += grid(n('left_cm', 'Left leg first, every time') + n('right_cm'));
-        html += out(['best_cm', 'asymmetry_pct']);
-        break;
-      case 'mb_throw':
-        html += '<div class="field" style="margin:10px 0 0"><label>Ball mass</label><div class="opts" data-ball>' +
-          [3, 4, 5, 6].map(function (kg) {
-            return '<label class="opt' + (Number(r.raw.ball_mass_kg) === kg ? ' on' : '') +
-              '" data-v="' + kg + '">' + kg + ' kg</label>';
-          }).join('') + '</div><div class="hint">4 kg male, 3 kg female. Different masses are not comparable.</div></div>';
-        html += grid(n('left_cm') + n('right_cm'));
-        html += out(['best_cm', 'asymmetry_pct']);
+        html += grid(n('left_m', 'Left leg first, every time') + n('right_m'));
+        html += out(['best_m', 'asymmetry_pct']);
         break;
       case 'sprint_10m':
         html += grid(n('time_20m_s', 'Optional') + n('time_30m_s', 'Optional'));
@@ -135,23 +126,31 @@
         html += grid(n('reps', 'Strict only. First invalid rep ends it.'));
         break;
       case 'weighted_chinup':
-        html += grid(n('added_kg') + n('reps'));
-        html += out(['rel_system_mass']);
+        html += grid(n('added_kg', 'Heaviest load for ONE strict rep'));
+        html += out(['system_mass_kg', 'rel_system_mass']);
         break;
       case 'bike_12min':
-        html += grid(n('mean_watts', 'AVERAGE watts, not peak') + n('mean_hr', 'Optional') +
-                     n('peak_hr', 'Optional'));
-        html += out(['w_per_kg', 'total_work_kj']);
+        html += '<div class="attempt-lbl" style="text-align:left;margin-bottom:6px">' +
+          'Watts at each minute — read the console every 60 s</div>' +
+          '<div style="display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(92px,120px))">';
+        for (var mi = 1; mi <= 12; mi++) {
+          var mv = r.raw['min_' + mi];
+          html += '<div><div class="attempt-lbl">' + mi + ' min</div>' +
+            '<input class="big" type="number" step="any" data-recalc data-bind="results.bike_12min.raw.min_' + mi +
+            '" value="' + (mv === null || mv === undefined ? '' : mv) + '"></div>';
+        }
+        html += '</div>';
+        html += grid(n('distance_km', 'From the console') + n('mean_hr', 'Optional') + n('peak_hr', 'Optional'));
+        html += out(['mean_watts', 'w_per_kg', 'total_work_kj', 'fade_pct']);
         break;
       case 'bike_30s':
-        html += grid(n('peak_watts') + n('mean_watts') + n('min_watts', 'Only if the console shows it'));
-        html += out(['peak_w_per_kg', 'mean_w_per_kg']);
+        html += '<div class="attempt-lbl" style="text-align:left;margin-bottom:6px">' +
+          'Watts at each 10-second mark</div>' +
+          grid(n('w_0_10') + n('w_10_20') + n('w_20_30'));
+        html += out(['peak_w_per_kg', 'mean_w_per_kg', 'fatigue_index_pct']);
         break;
       case 'bike_repeated':
         html += repeated(t, r);
-        break;
-      case 'movement_screen':
-        html += movement(t, r);
         break;
     }
     return html;
@@ -164,46 +163,21 @@
       cfg.sprints + ' × ' + cfg.workS + ' s with ' + cfg.recoveryS + ' s recovery' +
       (isDefault ? ' (PGP default)' : ' — NOT the default, so this will not be benchmarked') +
       ' · <a href="#" id="rsCfg">change</a></div>';
-    html += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
+    html += '<div class="attempt-lbl" style="text-align:left;margin-bottom:6px">Max watts for each sprint</div>' +
+      '<div style="display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(92px,130px))">';
     (r.sprints || []).forEach(function (s, i) {
-      html += '<div style="flex:1 1 130px;min-width:120px">' +
-        '<div class="attempt-lbl">Sprint ' + (i + 1) + ' — avg W</div>' +
+      html += '<div><div class="attempt-lbl">Sprint ' + (i + 1) + '</div>' +
         '<input class="big" type="number" step="any" data-recalc data-bind="results.bike_repeated.sprints[' + i +
-        '].mean_watts" value="' + (s.mean_watts === null || s.mean_watts === undefined ? '' : s.mean_watts) + '">' +
-        '<div class="attempt-lbl" style="margin-top:6px">peak W</div>' +
-        '<input type="number" step="any" data-recalc data-bind="results.bike_repeated.sprints[' + i +
         '].peak_watts" value="' + (s.peak_watts === null || s.peak_watts === undefined ? '' : s.peak_watts) + '">' +
         '</div>';
     });
     html += '</div>';
     html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">' +
-      ['mean_mean_w_per_kg', 'decrement_pct'].map(function (k) {
+      ['best_peak_watts', 'mean_peak_watts', 'mean_peak_w_per_kg', 'decrement_pct'].map(function (k) {
         var mm = P.Tests.metric(t.id, k);
         return '<div class="best-out" style="margin:0;flex:1 1 180px"><span class="k">' + U.esc(mm.label) +
           '</span><span class="v" data-derived="' + t.id + '|' + k + '">—</span></div>';
       }).join('') + '</div>';
-    return html;
-  }
-
-  function movement(t, r) {
-    var html = '<div class="fineprint" style="margin-bottom:10px">' +
-      '0 significant limitation · 1 moderate · 2 acceptable · blank if not assessed (never counted as zero). ' +
-      'Coach observation, not a diagnosis and not an injury-risk score.</div>';
-    (t.items || []).forEach(function (it) {
-      var cur = (r.items || {})[it.key];
-      html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;' +
-        'padding:5px 0;border-bottom:1px solid var(--border)">' +
-        '<span style="font-size:12.5px">' + U.esc(it.label) + '</span>' +
-        '<div class="opts" data-mv="' + U.esc(it.key) + '" style="flex-wrap:nowrap">' +
-        [0, 1, 2].map(function (v) {
-          return '<label class="opt' + (cur === v ? ' on' : '') + '" data-v="' + v +
-            '" style="padding:6px 12px">' + v + '</label>';
-        }).join('') +
-        '<label class="opt' + (cur === null || cur === undefined ? ' on-warn' : '') +
-        '" data-v="" style="padding:6px 10px">n/a</label></div></div>';
-    });
-    html += '<div class="best-out" style="margin-top:10px"><span class="k">Screen score</span>' +
-      '<span class="v" data-derived="movement_screen|score_pct">—</span></div>';
     return html;
   }
 
@@ -277,32 +251,6 @@
       });
     });
 
-    var ball = U.$('[data-ball]', mount);
-    if (ball) U.$$('.opt', ball).forEach(function (lab) {
-      lab.addEventListener('click', function () {
-        W.results.mb_throw.raw.ball_mass_kg = parseFloat(lab.dataset.v);
-        if (W.results.mb_throw.status === 'pending') W.results.mb_throw.status = 'tested';
-        U.$$('.opt', ball).forEach(function (o) { o.classList.remove('on'); });
-        lab.classList.add('on');
-        save(); refresh();
-      });
-    });
-
-    U.$$('[data-mv]', mount).forEach(function (grp) {
-      var key = grp.dataset.mv;
-      U.$$('.opt', grp).forEach(function (lab) {
-        lab.addEventListener('click', function () {
-          if (!W.results.movement_screen.items) W.results.movement_screen.items = {};
-          if (lab.dataset.v === '') delete W.results.movement_screen.items[key];
-          else W.results.movement_screen.items[key] = parseInt(lab.dataset.v, 10);
-          if (W.results.movement_screen.status === 'pending') W.results.movement_screen.status = 'tested';
-          if (!W.results.movement_screen.assessor) W.results.movement_screen.assessor = W.tester || '';
-          U.$$('.opt', grp).forEach(function (o) { o.classList.remove('on', 'on-warn'); });
-          lab.classList.add(lab.dataset.v === '' ? 'on-warn' : 'on');
-          save(); refresh();
-        });
-      });
-    });
 
     var cfg = U.$('#rsCfg', mount);
     if (cfg) cfg.addEventListener('click', function (e) {
@@ -322,7 +270,7 @@
             var r = W.results.bike_repeated;
             var n = Math.max(2, Math.min(12, U.numVal(U.$('#rcN')) || 6));
             r.config = { sprints: n, workS: U.numVal(U.$('#rcW')) || 15, recoveryS: U.numVal(U.$('#rcR')) || 45 };
-            while (r.sprints.length < n) r.sprints.push({ peak_watts: null, mean_watts: null });
+            while (r.sprints.length < n) r.sprints.push({ peak_watts: null });
             r.sprints.length = n;
             save(true); P.App.render();
           } }

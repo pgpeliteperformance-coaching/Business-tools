@@ -191,14 +191,8 @@
       cols.push(t.id + '__status', t.id + '__not_tested_reason');
       t.metrics.forEach(function (m) { cols.push(t.id + '__' + m.key); });
       if (t.id === 'bike_repeated') {
-        for (var i = 1; i <= 8; i++) {
-          cols.push('bike_repeated__s' + i + '_peak_w', 'bike_repeated__s' + i + '_mean_w');
-        }
+        for (var i = 1; i <= 8; i++) cols.push('bike_repeated__s' + i + '_peak_w');
         cols.push('bike_repeated__config');
-      }
-      if (t.isScreen) {
-        (t.items || []).forEach(function (it) { cols.push('movement__' + it.key); });
-        cols.push('movement__assessor');
       }
     });
     cols.push('session_notes', 'injury_notes');
@@ -249,19 +243,12 @@
       if (t.id === 'bike_repeated') {
         (res.sprints || []).forEach(function (s, i) {
           if (i >= 8) return;
-          r['bike_repeated__s' + (i + 1) + '_peak_w'] = s && s.peak_watts !== null ? s.peak_watts : '';
-          r['bike_repeated__s' + (i + 1) + '_mean_w'] = s && s.mean_watts !== null ? s.mean_watts : '';
+          r['bike_repeated__s' + (i + 1) + '_peak_w'] =
+            (s && s.peak_watts !== null && s.peak_watts !== undefined) ? s.peak_watts : '';
         });
         var cfg = res.config;
         r.bike_repeated__config = cfg
           ? cfg.sprints + 'x' + cfg.workS + 's/' + cfg.recoveryS + 's' : '';
-      }
-      if (t.isScreen) {
-        (t.items || []).forEach(function (it) {
-          var sc = (res.items || {})[it.key];
-          r['movement__' + it.key] = (sc === null || sc === undefined) ? '' : sc;
-        });
-        r.movement__assessor = res.assessor || '';
       }
     });
     r.session_notes = session.notes; r.injury_notes = session.injuryNotes;

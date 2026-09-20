@@ -40,9 +40,7 @@
     { id: 'anaerobic', name: 'Anaerobic Power',  short: 'ANA', order: 5,
       blurb: 'Maximal power output over a single short all-out effort.' },
     { id: 'repeated',  name: 'Repeated Effort',  short: 'REP', order: 6,
-      blurb: 'Ability to produce and re-produce high power outputs with limited recovery.' },
-    { id: 'movement',  name: 'Movement',         short: 'MOV', order: 7,
-      blurb: 'Coach-observed range of motion and movement control. Observation data, not a percentile against a population, and not a medical assessment.' }
+      blurb: 'Ability to produce and re-produce high power outputs with limited recovery.' }
   ];
 
   /* ---- shared reliability placeholder factory -------------------------- */
@@ -55,7 +53,7 @@
   /* ====================================================================== */
   var TESTS = [
 
-  /* ------------------------- 1. COUNTERMOVEMENT JUMP ------------------- */
+  /* ------------------------ 1. COUNTERMOVEMENT JUMP --------------------- */
   {
     id: 'cmj', name: 'Countermovement Jump', shortName: 'CMJ',
     category: 'power', order: 10, optional: false,
@@ -99,17 +97,17 @@
     }
   },
 
-  /* ------------------------- 2. STANDING BROAD JUMP -------------------- */
+  /* ------------------------ 2. STANDING BROAD JUMP ---------------------- */
   {
     id: 'broad_jump', name: 'Standing Broad Jump', shortName: 'Broad Jump',
     category: 'power', order: 20, optional: false,
     equipmentKey: 'tapeMeasure',
     metrics: [
-      { key: 'distance_cm', label: 'Distance', unit: 'cm', dp: 0, direction: 'high',
-        role: 'primary', benchmarked: true, range: [100, 330], hardRange: [0, 400] }
+      { key: 'distance_m', label: 'Distance', unit: 'm', dp: 2, direction: 'high',
+        role: 'primary', benchmarked: true, range: [1.0, 3.3], hardRange: [0, 4.0] }
     ],
-    attempts: 3, attemptDirection: 'high', attemptMetric: 'distance_cm',
-    reliability: { distance_cm: placeholderCV(3.0, 'Horizontal jump distance is highly reliable with a fixed take-off line and consistent measurement point.') },
+    attempts: 3, attemptDirection: 'high', attemptMetric: 'distance_m',
+    reliability: { distance_m: placeholderCV(3.0, 'Horizontal jump distance is highly reliable with a fixed take-off line and consistent measurement point.') },
     evidence: {
       testReliability: 'high',
       whatItMeasures: 'Horizontal lower-body explosive power and the ability to project body mass forward.',
@@ -126,7 +124,7 @@
       testProtocol: 'Arm swing is permitted. Two-foot take-off, two-foot landing.',
       attempts: '3 valid attempts.',
       rest: '45-60 s between attempts.',
-      record: 'Distance from the take-off line to the REARMOST heel contact, for each attempt.',
+      record: 'Distance in METRES from the take-off line to the REARMOST heel contact, for each attempt.',
       calculation: 'BEST valid attempt.',
       scoring: 'Best distance benchmarked against the matched reference set.',
       commonErrors: 'Measuring to the toe instead of the rearmost heel, stepping over the line, hands touching down behind the heels on landing (invalid), falling backwards (invalid).',
@@ -135,23 +133,23 @@
     }
   },
 
-  /* ------------------------- 3. SINGLE-LEG BROAD JUMP ------------------ */
+  /* ------------------------ 3. SINGLE-LEG BROAD JUMP -------------------- */
   {
     id: 'sl_broad_jump', name: 'Single-Leg Broad Jump', shortName: 'SL Broad Jump',
     category: 'power', order: 30, optional: false,
     equipmentKey: 'tapeMeasure',
     metrics: [
-      { key: 'left_cm', label: 'Left leg', unit: 'cm', dp: 0, direction: 'high',
-        role: 'secondary', benchmarked: false, range: [60, 260], hardRange: [0, 350] },
-      { key: 'right_cm', label: 'Right leg', unit: 'cm', dp: 0, direction: 'high',
-        role: 'secondary', benchmarked: false, range: [60, 260], hardRange: [0, 350] },
-      { key: 'best_cm', label: 'Best leg', unit: 'cm', dp: 0, direction: 'high',
-        role: 'primary', benchmarked: true, derived: true, range: [60, 260], hardRange: [0, 350] },
+      { key: 'left_m', label: 'Left leg', unit: 'm', dp: 2, direction: 'high',
+        role: 'secondary', benchmarked: false, range: [0.6, 2.6], hardRange: [0, 3.5] },
+      { key: 'right_m', label: 'Right leg', unit: 'm', dp: 2, direction: 'high',
+        role: 'secondary', benchmarked: false, range: [0.6, 2.6], hardRange: [0, 3.5] },
+      { key: 'best_m', label: 'Best leg', unit: 'm', dp: 2, direction: 'high',
+        role: 'primary', benchmarked: true, derived: true, range: [0.6, 2.6], hardRange: [0, 3.5] },
       { key: 'asymmetry_pct', label: 'L/R difference', unit: '%', dp: 1, direction: 'low',
         role: 'observation', benchmarked: false, derived: true, range: [0, 25], hardRange: [0, 100] }
     ],
     attempts: 2, attemptDirection: 'high',
-    reliability: { best_cm: placeholderCV(4.5, 'Single-leg horizontal jumping is less reliable than bilateral jumping, particularly in athletes unfamiliar with the task.') },
+    reliability: { best_m: placeholderCV(4.5, 'Single-leg horizontal jumping is less reliable than bilateral jumping, particularly in athletes unfamiliar with the task.') },
     evidence: {
       testReliability: 'medium',
       whatItMeasures: 'Unilateral horizontal power, and the difference in output between limbs.',
@@ -168,61 +166,16 @@
       testProtocol: 'Land on the same leg. Arm swing permitted. Alternate legs; always test the LEFT leg first for consistency.',
       attempts: '2 valid attempts per leg.',
       rest: '45 s between attempts, alternating legs.',
-      record: 'Best distance for left and for right.',
-      calculation: 'best_cm = max(left, right).  L/R difference % = |left - right| / max(left, right) x 100.',
-      scoring: 'best_cm is benchmarked. The L/R difference is reported as an observation with an editable flag threshold.',
+      record: 'Best distance in METRES for left and for right.',
+      calculation: 'best_m = max(left, right), in metres.  L/R difference % = |left - right| / max(left, right) x 100.',
+      scoring: 'best_m is benchmarked. The L/R difference is reported as an observation with an editable flag threshold.',
       commonErrors: 'Landing on two feet (invalid), hopping after landing before it is controlled (invalid), the free leg touching down before take-off.',
       stopCriteria: 'Pain, or inability to control a single-leg landing — in which case mark NOT TESTED with the reason.',
       standardisation: 'Always test left first. Same landing surface. A controlled landing on the same leg is required for a valid attempt.'
     }
   },
 
-  /* ------------------------- 4. ROTATIONAL MED BALL THROW ------------- */
-  {
-    id: 'mb_throw', name: 'Rotational Medicine Ball Throw', shortName: 'Rot MB Throw',
-    category: 'power', order: 40, optional: false,
-    equipmentKey: 'medBall',
-    massDependent: true, massField: 'ball_mass_kg',
-    metrics: [
-      { key: 'ball_mass_kg', label: 'Ball mass', unit: 'kg', dp: 1, direction: null,
-        role: 'condition', benchmarked: false, range: [1, 10], hardRange: [0.5, 20] },
-      { key: 'left_cm', label: 'Left / lead-side throw', unit: 'cm', dp: 0, direction: 'high',
-        role: 'secondary', benchmarked: false, range: [200, 1400], hardRange: [0, 2500] },
-      { key: 'right_cm', label: 'Right / rear-side throw', unit: 'cm', dp: 0, direction: 'high',
-        role: 'secondary', benchmarked: false, range: [200, 1400], hardRange: [0, 2500] },
-      { key: 'best_cm', label: 'Best throw', unit: 'cm', dp: 0, direction: 'high',
-        role: 'primary', benchmarked: true, derived: true, range: [200, 1400], hardRange: [0, 2500] },
-      { key: 'asymmetry_pct', label: 'L/R difference', unit: '%', dp: 1, direction: 'low',
-        role: 'observation', benchmarked: false, derived: true, range: [0, 30], hardRange: [0, 100] }
-    ],
-    attempts: 3, attemptDirection: 'high',
-    reliability: { best_cm: placeholderCV(5.0, 'Rotational throw distance is sensitive to technique and to how strictly foot position is enforced.') },
-    evidence: {
-      testReliability: 'medium',
-      whatItMeasures: 'Rotational power output of the trunk and hips against a fixed external mass.',
-      whyRelevant: 'Rotational force production underpins striking and clinch/takedown actions. This is the most sport-relevant power test in the battery, and the most technique-sensitive.',
-      limitations: 'Throw distance depends heavily on release angle and technique, and is NOT a measure of punching power. Results are ONLY comparable at the same ball mass and the same foot-position rule — a 3 kg and a 4 kg throw cannot be compared, and the app refuses to benchmark a mass it has no reference set for.',
-      evidenceStrength: 'Moderate for reliability with a well-standardised protocol. Reference data for the PGP protocol is provisional and low confidence; recalibrate against PGP internal data as a priority.'
-    },
-    protocol: {
-      purpose: 'Assess rotational power output.',
-      equipment: 'Medicine ball of a recorded mass (PGP default: 4 kg male / 3 kg female). Tape measure. Wall-free open space of at least 15 m.',
-      setup: 'Athlete stands side-on to the throwing direction, feet parallel, hip-width, both toes on a marked line.',
-      warmup: 'PGP general warm-up plus 3 submaximal rotational throws per side.',
-      instructions: '"Feet stay where they are. Load back, then throw the ball as far as you can in that direction. You can rotate and rise onto your back foot, but neither foot leaves its spot."',
-      testProtocol: 'Standing, feet fixed on the line — NO step, NO shuffle, NO crossover. Heels may rotate and lift; the foot must not translate. Test each side.',
-      attempts: '3 valid attempts per side.',
-      rest: '45 s between attempts.',
-      record: 'Ball mass. Best distance for each side, measured from the line to first ball contact with the floor.',
-      calculation: 'best_cm = max(left, right).  L/R difference % = |left - right| / max(left, right) x 100.',
-      scoring: 'best_cm benchmarked ONLY against a reference set of the same ball mass. Different mass = no percentile.',
-      commonErrors: 'Stepping or shuffling (invalid — the single most common error), throwing upward instead of outward, measuring to where the ball stops rolling instead of first contact.',
-      stopCriteria: 'Pain, particularly in the lower back or ribs.',
-      standardisation: 'Same ball mass, same feet-fixed rule, same measurement point (first contact). Record the mass on every test.'
-    }
-  },
-
-  /* ------------------------- 5. 10 M SPRINT ---------------------------- */
+  /* ------------------------ 4. 10 M SPRINT ------------------------------ */
   {
     id: 'sprint_10m', name: '10 m Sprint', shortName: '10 m',
     category: 'speed', order: 50, optional: false,
@@ -264,7 +217,7 @@
     }
   },
 
-  /* ------------------------- 6. TRAP-BAR DEADLIFT --------------------- */
+  /* ------------------------ 5. TRAP-BAR DEADLIFT ------------------------ */
   {
     id: 'trapbar', name: 'Trap-Bar Deadlift', shortName: 'Trap Bar',
     category: 'strength', order: 60, optional: false,
@@ -306,7 +259,7 @@
     }
   },
 
-  /* ------------------------- 7. STRICT CHIN-UPS ----------------------- */
+  /* ------------------------ 6. STRICT CHIN-UPS -------------------------- */
   {
     id: 'chinup', name: 'Strict Bodyweight Chin-Ups', shortName: 'Chin-Ups',
     category: 'strength', order: 70, optional: false,
@@ -347,16 +300,14 @@
     }
   },
 
-  /* ------------------------- 8. WEIGHTED CHIN-UP ---------------------- */
+  /* ------------------------ 7. WEIGHTED CHIN-UP (1RM) ------------------- */
   {
-    id: 'weighted_chinup', name: 'Weighted Chin-Up', shortName: 'Wtd Chin-Up',
+    id: 'weighted_chinup', name: 'Weighted Chin-Up (1RM)', shortName: 'Wtd Chin-Up',
     category: 'strength', order: 80, optional: true,
     equipmentKey: 'pullUpBar',
     metrics: [
-      { key: 'added_kg', label: 'Added load', unit: 'kg', dp: 1, direction: 'high',
+      { key: 'added_kg', label: 'Added load for a single', unit: 'kg', dp: 1, direction: 'high',
         role: 'secondary', benchmarked: false, range: [0, 80], hardRange: [0, 200] },
-      { key: 'reps', label: 'Reps completed', unit: 'reps', dp: 0, direction: 'high',
-        role: 'condition', benchmarked: false, range: [1, 6], hardRange: [1, 20] },
       { key: 'system_mass_kg', label: 'System mass', unit: 'kg', dp: 1, direction: 'high',
         role: 'secondary', benchmarked: false, derived: true, range: [50, 220], hardRange: [0, 400] },
       { key: 'rel_system_mass', label: 'Relative system mass', unit: 'x BW', dp: 3, direction: 'high',
@@ -366,30 +317,30 @@
     reliability: { rel_system_mass: placeholderCV(4.0) },
     evidence: {
       testReliability: 'medium',
-      whatItMeasures: 'Maximal upper-body pulling strength relative to body mass, with the strength-endurance component removed.',
-      whyRelevant: 'A cleaner maximal-strength measure than a max-repetition set. Appropriate for athletes who can already perform more than roughly 10 strict chin-ups, where a rep-max test becomes an endurance test.',
-      limitations: 'Advanced test — only for athletes with demonstrated strict chin-up competence. Results are reported SEPARATELY from bodyweight chin-ups and the two are never pooled into one benchmark.',
+      whatItMeasures: 'Maximal upper-body pulling strength relative to body mass, as a genuine one-repetition maximum.',
+      whyRelevant: 'A clean maximal-strength measure with no strength-endurance component. Appropriate for athletes who can already perform more than roughly ten strict chin-ups, where a repetition-maximum test has become an endurance test.',
+      limitations: 'A TESTED 1RM, not an estimate: it is the heaviest single the athlete completed to the full strict standard, and no prediction equation is involved. Advanced test — only for athletes with demonstrated strict chin-up competence. Reported SEPARATELY from bodyweight chin-ups; the two are never pooled.',
       evidenceStrength: 'Moderate. Provisional standards.'
     },
     protocol: {
-      purpose: 'Assess maximal relative upper-body pulling strength.',
+      purpose: 'Assess maximal relative upper-body pulling strength as a tested 1RM.',
       equipment: 'Chin-up bar, dipping belt, plates, or a weight vest (RECORD which — a vest changes the load position).',
       setup: 'As the strict chin-up. Load hung from a dipping belt for the PGP default.',
-      warmup: 'Strict chin-up warm-up plus 2-3 ramping loaded singles/doubles.',
-      instructions: 'Same strict standard as the bodyweight test, under load.',
-      testProtocol: 'Ramp to the heaviest technically sound 3RM (PGP default). Maximum 3 top-end attempts.',
-      attempts: 'Up to 3 top-end attempts.',
-      rest: '3 min between top-end attempts.',
-      record: 'Added load, reps, loading method, body mass.',
-      calculation: 'Estimated 1RM system mass = (body mass + added load) x (1 + reps/30). Relative system mass = estimated 1RM system mass / body mass.',
-      scoring: 'Relative system mass benchmarked.',
-      commonErrors: 'Mixing vest and belt loading between tests, partial range under load, kipping.',
-      stopCriteria: 'Shoulder or elbow pain, loss of range.',
-      standardisation: 'Same loading method, same grip, same strict range.'
+      warmup: 'Strict chin-up warm-up, then ramping loaded singles: roughly 50%, 70%, 85% and 95% of the expected top single, one repetition each, with 2 min between.',
+      instructions: 'Same strict standard as the bodyweight test, under load. "One rep. Dead hang, chin clearly over the bar, all the way down. If it grinds or you kick, it does not count."',
+      testProtocol: 'SINGLES ONLY. Work up in small jumps to the heaviest single the athlete can complete to the full strict standard. Maximum 3 attempts at or near the top load. A failed or non-strict single does not count and the previous successful load stands.',
+      attempts: 'Up to 3 top-end singles after the ramp.',
+      rest: '3 min between top-end singles.',
+      record: 'The heaviest added load completed for ONE strict repetition. Loading method. Body mass.',
+      calculation: 'System mass = body mass + added load. Relative system mass = system mass / body mass. No estimation equation is used: this is a tested single.',
+      scoring: 'Relative system mass benchmarked. 1.30 x body mass means lifting body mass plus 30% of body mass for a single.',
+      commonErrors: 'Counting a grinding or kipped rep, partial range under load, mixing vest and belt loading between tests, working up in jumps too big to find the true maximum.',
+      stopCriteria: 'Shoulder or elbow pain, loss of range, any rep the athlete cannot control.',
+      standardisation: 'Same loading method, same grip, same strict range, same warm-up ramp.'
     }
   },
 
-  /* ------------------------- 9. BENCH PRESS --------------------------- */
+  /* ------------------------ 8. BENCH PRESS ------------------------------ */
   {
     id: 'bench', name: 'Bench Press', shortName: 'Bench',
     category: 'strength', order: 90, optional: true,
@@ -431,26 +382,41 @@
     }
   },
 
-  /* ------------------------- 10. 12-MIN AEROBIC ----------------------- */
+  /* ------------------------ 9. 12-MIN AEROBIC --------------------------- */
   {
     id: 'bike_12min', name: '12-Minute AirBike Aerobic Capacity Test', shortName: '12-min Bike',
     category: 'aerobic', order: 100, optional: false,
     equipmentKey: 'airBike',
     equipmentDependent: true,
-    metrics: [
-      { key: 'mean_watts', label: 'Average power', unit: 'W', dp: 0, direction: 'high',
-        role: 'secondary', benchmarked: false, range: [80, 500], hardRange: [0, 900] },
-      { key: 'w_per_kg', label: 'Average power / body mass', unit: 'W/kg', dp: 2, direction: 'high',
-        role: 'primary', benchmarked: true, derived: true, range: [1.2, 4.5], hardRange: [0, 8] },
-      { key: 'total_work_kj', label: 'Total work', unit: 'kJ', dp: 0, direction: 'high',
-        role: 'secondary', benchmarked: false, derived: true, range: [60, 360], hardRange: [0, 700] },
-      { key: 'calories', label: 'Calories (console)', unit: 'kcal', dp: 0, direction: 'high',
-        role: 'secondary', benchmarked: false, range: [80, 400], hardRange: [0, 900] },
-      { key: 'mean_hr', label: 'Average heart rate', unit: 'bpm', dp: 0, direction: null,
-        role: 'observation', benchmarked: false, range: [120, 205], hardRange: [40, 230] },
-      { key: 'peak_hr', label: 'Peak heart rate', unit: 'bpm', dp: 0, direction: null,
-        role: 'observation', benchmarked: false, range: [140, 215], hardRange: [40, 240] }
-    ],
+    metrics: (function () {
+      /* One box per minute. The coach reads the console every 60 s, which is
+         what they are doing anyway, and the app takes the average rather than
+         asking them to work it out. It also makes the pacing visible: an
+         athlete who fades badly in the second half tested differently from one
+         who held the number, even at the same average. */
+      var m = [];
+      for (var i = 1; i <= 12; i++) {
+        m.push({ key: 'min_' + i, label: 'Minute ' + i, unit: 'W', dp: 0, direction: 'high',
+                 role: 'sample', benchmarked: false, range: [60, 700], hardRange: [0, 1200] });
+      }
+      return m.concat([
+        { key: 'mean_watts', label: 'Average power', unit: 'W', dp: 0, direction: 'high',
+          role: 'secondary', benchmarked: false, derived: true, range: [80, 500], hardRange: [0, 900] },
+        { key: 'w_per_kg', label: 'Average power / body mass', unit: 'W/kg', dp: 2, direction: 'high',
+          role: 'primary', benchmarked: true, derived: true, range: [1.2, 4.5], hardRange: [0, 8] },
+        { key: 'distance_km', label: 'Total distance', unit: 'km', dp: 2, direction: 'high',
+          role: 'secondary', benchmarked: false, range: [2, 12], hardRange: [0, 25] },
+        { key: 'total_work_kj', label: 'Total work', unit: 'kJ', dp: 0, direction: 'high',
+          role: 'secondary', benchmarked: false, derived: true, range: [60, 360], hardRange: [0, 700] },
+        { key: 'fade_pct', label: 'Second-half fade', unit: '%', dp: 1, direction: 'low',
+          role: 'observation', benchmarked: false, derived: true, range: [-10, 30], hardRange: [-50, 90] },
+        { key: 'mean_hr', label: 'Average heart rate', unit: 'bpm', dp: 0, direction: null,
+          role: 'observation', benchmarked: false, range: [120, 205], hardRange: [40, 230] },
+        { key: 'peak_hr', label: 'Peak heart rate', unit: 'bpm', dp: 0, direction: null,
+          role: 'observation', benchmarked: false, range: [140, 215], hardRange: [40, 240] }
+      ]);
+    })(),
+    minuteSamples: 12,
     attempts: 1, durationS: 720,
     reliability: { w_per_kg: placeholderCV(5.0, 'Pacing strategy is the dominant source of variation. Familiarisation matters more here than on any other test in the battery.') },
     evidence: {
@@ -466,11 +432,11 @@
       setup: 'Seat height set so the knee is almost but not fully extended at the bottom of the stroke. RECORD the seat position and use it again at retest.',
       warmup: '5 min progressive easy riding, then 3 x 10 s builds with 50 s easy, then 3 min easy. Finish 3 min before the test starts.',
       instructions: '"Twelve minutes, as much average power as you can hold. It is a pacing test as much as a fitness test — going too hard in the first two minutes will cost you more than it gains. I will call every three minutes."',
-      testProtocol: 'Continuous 12 minutes. Console reset to zero before starting. Athlete must not stop. Coach calls elapsed time at 3, 6, 9 and 11 minutes.',
+      testProtocol: 'Continuous 12 minutes. Console reset to zero before starting. Athlete must not stop. Coach calls every minute and writes down the watts showing at that moment.',
       attempts: '1.',
       rest: 'This test comes LAST in a single-session battery. See the testing-order rationale on the Protocol page.',
-      record: 'Average watts (or total work / calories if the console does not show average watts), body mass, machine model, average and peak heart rate, whether the test was completed in full.',
-      calculation: 'W/kg = average watts / body mass. Total work (kJ) = average watts x 720 / 1000. If the console gives only total work, average watts = work(kJ) x 1000 / 720.',
+      record: 'WATTS AT EVERY MINUTE — read the console at each of the twelve minute marks and write the number down. Plus total distance, body mass, machine model, average and peak heart rate, and whether the test was completed in full.',
+      calculation: 'Average watts = the mean of the minute readings recorded. W/kg = average watts / body mass. Total work (kJ) = average watts x 720 / 1000. Second-half fade % = (mean of minutes 1-6 - mean of minutes 7-12) / mean of minutes 1-6 x 100, reported as an observation so pacing is visible rather than hidden inside the average.',
       scoring: 'Average W/kg benchmarked against a reference set for the same machine family.',
       commonErrors: 'Forgetting to reset the console, changing the seat position between tests, reading peak instead of average watts, comparing calories between different machines, pacing failure in an unfamiliarised athlete.',
       stopCriteria: 'Chest pain, dizziness, disproportionate breathlessness, or the athlete stopping. If the athlete stops, record the time reached and mark the test INCOMPLETE — do not benchmark a partial test.',
@@ -478,28 +444,38 @@
     }
   },
 
-  /* ------------------------- 11. 30-S ANAEROBIC ----------------------- */
+  /* ------------------------ 10. 30-S ANAEROBIC -------------------------- */
   {
     id: 'bike_30s', name: '30-Second AirBike Sprint', shortName: '30-s Bike',
     category: 'anaerobic', order: 110, optional: false,
     equipmentKey: 'airBike',
     equipmentDependent: true,
     metrics: [
+      /* Three ten-second readings. Peak, mean and minimum all fall out of
+         them, which also makes the fatigue index computable on a console that
+         reports nothing but the current number. */
+      { key: 'w_0_10', label: '0-10 s', unit: 'W', dp: 0, direction: 'high',
+        role: 'sample', benchmarked: false, range: [200, 2000], hardRange: [0, 3000] },
+      { key: 'w_10_20', label: '10-20 s', unit: 'W', dp: 0, direction: 'high',
+        role: 'sample', benchmarked: false, range: [200, 2000], hardRange: [0, 3000] },
+      { key: 'w_20_30', label: '20-30 s', unit: 'W', dp: 0, direction: 'high',
+        role: 'sample', benchmarked: false, range: [150, 2000], hardRange: [0, 3000] },
       { key: 'peak_watts', label: 'Peak power', unit: 'W', dp: 0, direction: 'high',
-        role: 'secondary', benchmarked: false, range: [400, 1800], hardRange: [0, 3000] },
+        role: 'secondary', benchmarked: false, derived: true, range: [400, 1800], hardRange: [0, 3000] },
       { key: 'peak_w_per_kg', label: 'Peak power / body mass', unit: 'W/kg', dp: 2, direction: 'high',
         role: 'primary', benchmarked: true, derived: true, range: [6, 20], hardRange: [0, 30] },
       { key: 'mean_watts', label: 'Mean power', unit: 'W', dp: 0, direction: 'high',
-        role: 'secondary', benchmarked: false, range: [250, 1200], hardRange: [0, 2000] },
+        role: 'secondary', benchmarked: false, derived: true, range: [250, 1200], hardRange: [0, 2000] },
       { key: 'mean_w_per_kg', label: 'Mean power / body mass', unit: 'W/kg', dp: 2, direction: 'high',
         role: 'primary', benchmarked: true, derived: true, range: [4, 14], hardRange: [0, 25] },
       { key: 'min_watts', label: 'Minimum power', unit: 'W', dp: 0, direction: 'high',
-        role: 'secondary', benchmarked: false, range: [150, 900], hardRange: [0, 2000] },
+        role: 'secondary', benchmarked: false, derived: true, range: [150, 900], hardRange: [0, 2000] },
       { key: 'total_work_kj', label: 'Total work', unit: 'kJ', dp: 1, direction: 'high',
         role: 'secondary', benchmarked: false, derived: true, range: [8, 36], hardRange: [0, 60] },
       { key: 'fatigue_index_pct', label: 'Fatigue index', unit: '%', dp: 1, direction: 'low',
-        role: 'observation', benchmarked: false, derived: true, range: [10, 70], hardRange: [0, 100] }
+        role: 'observation', benchmarked: false, derived: true, range: [5, 70], hardRange: [0, 100] }
     ],
+    splitSamples: ['w_0_10', 'w_10_20', 'w_20_30'],
     attempts: 1, durationS: 30,
     reliability: { peak_w_per_kg: placeholderCV(5.0), mean_w_per_kg: placeholderCV(4.0) },
     evidence: {
@@ -518,16 +494,16 @@
       testProtocol: 'Rolling start from a slow cadence, console reset. 30 seconds maximal. Verbal encouragement throughout. Athlete stays seated.',
       attempts: '1.',
       rest: 'Minimum 3 min easy spinning afterwards, then at least 10 min before the repeated-effort test if both are performed. See the testing-order rationale — running BOTH bike sprint tests plus the 12-minute test on the same day is not recommended.',
-      record: 'Peak watts, mean watts, minimum watts if the console reports it, total work or calories, body mass, machine model.',
-      calculation: 'Peak W/kg = peak watts / body mass. Mean W/kg = mean watts / body mass. Total work (kJ) = mean watts x 30 / 1000. Fatigue index % = (peak - minimum) / peak x 100, computed ONLY when minimum power is recorded.',
+      record: 'WATTS AT 10 s, 20 s AND 30 s — read the console at each mark. Plus body mass and machine model.',
+      calculation: 'Peak = the highest of the three readings, mean = their average, minimum = the lowest. Peak W/kg = peak / body mass. Mean W/kg = mean / body mass. Total work (kJ) = mean x 30 / 1000. Fatigue index % = (peak - minimum) / peak x 100.',
       scoring: 'Peak W/kg and mean W/kg are both benchmarked and contribute equally to the anaerobic power category by default.',
-      commonErrors: 'Pacing the effort, a slow start from a standstill, failing to reset the console, reading average instead of peak, comparing across machine brands.',
+      commonErrors: 'Pacing the effort, a slow start from a standstill, missing one of the three reading points, comparing across machine brands. Have a second person read the console — the athlete cannot and the timer needs watching.',
       stopCriteria: 'Chest pain, dizziness, syncope risk. Ensure the athlete stays seated and supervised for 2 min afterwards.',
       standardisation: 'Same machine, same seat position, same warm-up, same start type, same encouragement.'
     }
   },
 
-  /* ------------------------- 12. REPEATED SPRINT ---------------------- */
+  /* ------------------------ 11. REPEATED SPRINT ------------------------- */
   {
     id: 'bike_repeated', name: 'Repeated AirBike Sprint Test', shortName: 'Repeated Sprint',
     category: 'repeated', order: 120, optional: false,
@@ -535,35 +511,33 @@
     equipmentDependent: true, protocolConfigurable: true,
     defaultConfig: { sprints: 6, workS: 15, recoveryS: 45 },
     metrics: [
-      { key: 'best_peak_watts', label: 'Best sprint (peak W)', unit: 'W', dp: 0, direction: 'high',
+      { key: 'best_peak_watts', label: 'Best sprint', unit: 'W', dp: 0, direction: 'high',
         role: 'secondary', benchmarked: false, derived: true, range: [400, 1800], hardRange: [0, 3000] },
-      { key: 'mean_peak_watts', label: 'Mean of sprint peaks', unit: 'W', dp: 0, direction: 'high',
-        role: 'secondary', benchmarked: false, derived: true, range: [300, 1600], hardRange: [0, 3000] },
-      { key: 'mean_mean_watts', label: 'Mean sprint power', unit: 'W', dp: 0, direction: 'high',
-        role: 'secondary', benchmarked: false, derived: true, range: [200, 1200], hardRange: [0, 2000] },
-      { key: 'mean_mean_w_per_kg', label: 'Mean sprint power / body mass', unit: 'W/kg', dp: 2, direction: 'high',
-        role: 'primary', benchmarked: true, derived: true, range: [3.5, 14], hardRange: [0, 25] },
-      { key: 'decrement_pct', label: 'Performance decrement', unit: '%', dp: 1, direction: 'low',
+      { key: 'worst_peak_watts', label: 'Worst sprint', unit: 'W', dp: 0, direction: 'high',
+        role: 'secondary', benchmarked: false, derived: true, range: [250, 1700], hardRange: [0, 3000] },
+      { key: 'mean_peak_watts', label: 'Average sprint', unit: 'W', dp: 0, direction: 'high',
+        role: 'secondary', benchmarked: false, derived: true, range: [300, 1700], hardRange: [0, 3000] },
+      { key: 'mean_peak_w_per_kg', label: 'Average sprint / body mass', unit: 'W/kg', dp: 2, direction: 'high',
+        role: 'primary', benchmarked: true, derived: true, range: [4, 18], hardRange: [0, 30] },
+      { key: 'decrement_pct', label: 'Loss of watts', unit: '%', dp: 1, direction: 'low',
         role: 'primary', benchmarked: true, derived: true, range: [0, 30], hardRange: [0, 80] },
-      { key: 'total_work_kj', label: 'Total work', unit: 'kJ', dp: 1, direction: 'high',
-        role: 'secondary', benchmarked: false, derived: true, range: [20, 120], hardRange: [0, 250] },
-      { key: 'best_worst_pct', label: 'Best-to-worst decline', unit: '%', dp: 1, direction: 'low',
+      { key: 'best_worst_pct', label: 'Best-to-worst drop', unit: '%', dp: 1, direction: 'low',
         role: 'observation', benchmarked: false, derived: true, range: [0, 45], hardRange: [0, 100] },
-      { key: 'slope_w_per_sprint', label: 'Decline per sprint', unit: 'W/sprint', dp: 1, direction: 'high',
-        role: 'observation', benchmarked: false, derived: true, range: [-80, 10], hardRange: [-300, 100] }
+      { key: 'slope_w_per_sprint', label: 'Drop per sprint', unit: 'W/sprint', dp: 1, direction: 'high',
+        role: 'observation', benchmarked: false, derived: true, range: [-90, 10], hardRange: [-300, 100] }
     ],
     attempts: 1,
     reliability: {
-      mean_mean_w_per_kg: placeholderCV(4.0),
+      mean_peak_w_per_kg: placeholderCV(4.0),
       decrement_pct: { typicalError: 2.0, verified: false,
         source: 'PGP PLACEHOLDER (2 percentage points)',
-        note: 'Decrement scores are inherently noisier than the power values they are derived from, because they depend on a single best sprint. Interpret changes in decrement with particular caution.' }
+        note: 'Loss-of-watts scores are noisier than the power values they come from, because they depend on a single best sprint. Interpret a change in this number with particular caution.' }
     },
     evidence: {
       testReliability: 'medium',
-      whatItMeasures: 'Two separate things, reported separately: (1) the AMOUNT of power the athlete can produce across repeated efforts (mean sprint power per kg) and (2) how well that power is MAINTAINED across the set (performance decrement).',
+      whatItMeasures: 'Two separate things, reported separately: (1) the AMOUNT of power the athlete can produce across repeated efforts (average of the sprint peaks, per kg) and (2) how well that power is MAINTAINED across the set (loss of watts).',
       whyRelevant: 'The intermittent high-intensity, incomplete-recovery structure of this test is the closest thing in the battery to the demands of a competitive round. It is the most sport-relevant conditioning test here.',
-      limitations: 'Decrement and mean power must be read together: an athlete who paces the first sprint conservatively will post an artificially good decrement score with a poor mean power. The app therefore benchmarks both and never reports decrement alone. A decrement score is only comparable within the identical protocol — changing the number of sprints, the work duration or the recovery period creates a DIFFERENT TEST, and the app stores the configuration with the result and refuses to compare across configurations.',
+      limitations: 'Loss of watts and average power must be read together: an athlete who paces the first sprint conservatively will post an artificially good loss-of-watts score with a poor average. The app therefore benchmarks both and never reports the loss figure alone. It is only comparable within the identical protocol — changing the number of sprints, the work duration or the recovery period creates a DIFFERENT TEST, and the app stores the configuration with the result and refuses to compare across configurations.',
       evidenceStrength: 'The decrement formula (Fitzsimons et al., 1993) is well established. The specific 6 x 15 s / 45 s air-bike protocol has no published norms; standards are provisional.'
     },
     protocol: {
@@ -573,71 +547,14 @@
       warmup: '5 min easy riding, 3 x 5 s accelerations with 55 s easy, 2 min easy, 2 min passive.',
       instructions: '"Six sprints, fifteen seconds each, forty-five seconds easy between them. Every single one is maximal — do not pace the first one to save yourself, and do not pace the last one because you are tired. I will count you in for each."',
       testProtocol: 'PGP DEFAULT: 6 sprints x 15 s maximal, 45 s active recovery (easy pedalling) between sprints. Rolling start into each sprint. Console reset, or peak and average noted, for EVERY sprint. Any change to sprint count, work duration or recovery duration must be recorded in the configuration fields and constitutes a different protocol.',
-      attempts: '1 set of 6.',
+      attempts: '1 set of 6, one number recorded per sprint.',
       rest: '45 s between sprints (configurable — if changed, the configuration is stored and results are not compared with the default).',
-      record: 'Peak watts AND average watts for every individual sprint. Body mass. Machine model. The protocol configuration actually used.',
-      calculation: 'Mean sprint power = mean of the individual sprint average watts. Mean sprint power / kg = that value / body mass. Performance decrement (Fitzsimons et al., 1993) = (1 - (sum of sprint averages / (best sprint average x number of sprints))) x 100. Total work (kJ) = sum of (sprint average watts x work duration) / 1000. Best-to-worst decline % = (best - worst) / best x 100. Decline per sprint = OLS slope of sprint average power against sprint number.',
-      scoring: 'Mean sprint power per kg AND performance decrement are both benchmarked, and are weighted 70/30 in the repeated-effort category score by default — the amount of power matters more than the flatness of the curve. Weights are editable in Settings.',
-      commonErrors: 'Pacing the first sprint (this corrupts the decrement score), drifting recovery periods, recording only peak power, failing to record the configuration used, one person trying to time and record alone.',
+      record: 'MAX WATTS FOR EACH SPRINT — one number per sprint, nothing else. Body mass. Machine model. The protocol configuration actually used.',
+      calculation: 'Average sprint = the mean of the sprint peaks. Average sprint / kg = that value / body mass. Best sprint = the highest peak. Loss of watts (Fitzsimons et al., 1993) = (1 - (sum of peaks / (best peak x number of sprints))) x 100. Best-to-worst drop % = (best - worst) / best x 100. Drop per sprint = OLS slope of peak power against sprint number.',
+      scoring: 'Average sprint per kg AND loss of watts are both benchmarked, weighted 70/30 in the repeated-effort category score by default — the amount of power matters more than the flatness of the curve. Weights are editable in Settings.',
+      commonErrors: 'Pacing the first sprint (this corrupts the loss-of-watts score), drifting recovery periods, failing to record the configuration used, one person trying to time and record alone.',
       stopCriteria: 'Chest pain, dizziness, vomiting, or an inability to continue. If the set is not completed, record the number of sprints completed and mark INCOMPLETE — do not compute a decrement from a partial set.',
       standardisation: 'Identical timing cues, identical recovery duration, identical encouragement, same machine, same seat position, same recorder.'
-    }
-  },
-
-  /* ------------------------- 13. MOVEMENT SCREEN ---------------------- */
-  {
-    id: 'movement_screen', name: 'Movement Observation Screen', shortName: 'Movement',
-    category: 'movement', order: 130, optional: true,
-    equipmentKey: 'none',
-    isScreen: true,
-    items: [
-      { key: 'ankle_df_l',  label: 'Ankle dorsiflexion — left',      note: 'Knee-to-wall. Record distance (cm) in the notes if measured.' },
-      { key: 'ankle_df_r',  label: 'Ankle dorsiflexion — right',     note: '' },
-      { key: 'hip_ir_l',    label: 'Hip internal rotation — left',   note: 'Seated or prone, consistent position.' },
-      { key: 'hip_ir_r',    label: 'Hip internal rotation — right',  note: '' },
-      { key: 'hip_er_l',    label: 'Hip external rotation — left',   note: '' },
-      { key: 'hip_er_r',    label: 'Hip external rotation — right',  note: '' },
-      { key: 'shoulder_flex_l', label: 'Shoulder flexion — left',    note: 'Supine, lumbar spine flat.' },
-      { key: 'shoulder_flex_r', label: 'Shoulder flexion — right',   note: '' },
-      { key: 'thoracic_rot_l',  label: 'Thoracic rotation — left',   note: 'Seated or quadruped, pelvis locked.' },
-      { key: 'thoracic_rot_r',  label: 'Thoracic rotation — right',  note: '' },
-      { key: 'sl_squat_l',  label: 'Single-leg squat / step-down — left',  note: 'Observe control, not depth alone.' },
-      { key: 'sl_squat_r',  label: 'Single-leg squat / step-down — right', note: '' }
-    ],
-    scoreScale: [
-      { value: 0, label: 'Significant limitation', desc: 'Range or control is clearly restricted and would meaningfully limit training exposure in this pattern.' },
-      { value: 1, label: 'Moderate limitation',    desc: 'Range or control is reduced but does not prevent loaded training in this pattern.' },
-      { value: 2, label: 'Acceptable',             desc: 'Range and control are adequate for the training the athlete needs to do.' }
-    ],
-    metrics: [
-      { key: 'score_pct', label: 'Screen score', unit: '% of max', dp: 0, direction: 'high',
-        role: 'primary', benchmarked: true, derived: true, range: [0, 100], hardRange: [0, 100] }
-    ],
-    reliability: { score_pct: { typicalError: null, verified: false,
-      source: 'Not established. Inter-rater reliability of subjective movement screens is generally poor to moderate.',
-      note: 'Do NOT interpret small changes in this score. It exists to flag patterns worth a closer look, not to be tracked to the percentage point.' } },
-    evidence: {
-      testReliability: 'low',
-      whatItMeasures: 'The assessing coach\'s judgement of available range of motion and movement control in selected patterns, on the day, in that athlete.',
-      whyRelevant: 'Identifies patterns where a training exposure may need modifying, and gives context to a power or strength result (for example, restricted ankle dorsiflexion alongside a low jump score).',
-      limitations: 'THIS IS COACH-OBSERVATION DATA, NOT A MEDICAL ASSESSMENT AND NOT A DIAGNOSIS. It does not predict injury — the published evidence for movement screens as injury-prediction tools is weak and largely negative. It has low inter-rater reliability, so scores from different assessors are not comparable. It is scored as a percentage of the achievable maximum, NOT as a percentile against a population, because no defensible reference population exists. It is excluded from any composite index by default.',
-      evidenceStrength: 'Weak as a predictive tool. Useful as structured, documented coach observation — which is all this app claims it is.'
-    },
-    protocol: {
-      purpose: 'Document coach-observed range of motion and movement control to inform training decisions.',
-      equipment: 'Wall, box or step of a recorded height, tape measure, goniometer or inclinometer if available.',
-      setup: 'Standardised start position for each item. Bare feet or the same footwear every time.',
-      warmup: 'Performed BEFORE the physical warm-up and before any testing, so that the observation reflects the athlete\'s habitual state rather than a post-warm-up state. Keep this consistent — screening warm or cold changes the result.',
-      instructions: 'Demonstrate each item once. Two observation trials per side. Score what you see, not what you hope to see.',
-      testProtocol: 'Score each item 0, 1 or 2 using the anchored scale. Any item not assessed is left blank, NOT scored zero. Record the reason for anything not assessed.',
-      attempts: '2 observation trials per item per side.',
-      rest: 'N/A.',
-      record: 'A score for each item assessed, plus a free-text note for anything the score does not capture. Record the assessor\'s name — scores are not comparable between assessors.',
-      calculation: 'Screen score % = sum of scores assessed / (2 x number of items assessed) x 100. Items not assessed are excluded from both the numerator and the denominator.',
-      scoring: 'Reported as a percentage of the achievable maximum with a performance band. NOT a percentile.',
-      commonErrors: 'Scoring an item that was not actually assessed, scoring zero for a missing item, screening warm on one occasion and cold on another, a different assessor at retest, treating a low score as a diagnosis.',
-      stopCriteria: 'Any pain. Pain during the screen is a reason to refer, not a reason to score. Record it and flag the athlete for test modification.',
-      standardisation: 'Same assessor, same order, same warm/cold state, same footwear, same equipment heights. Record the assessor every time.'
     }
   }
   ];

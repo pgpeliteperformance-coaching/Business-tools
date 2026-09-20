@@ -178,7 +178,7 @@
       '<div class="fineprint" style="line-height:1.7">Results between these two points are not far enough from the ' +
       'middle of the reference population to be called either a strength or a weakness, so they are reported without ' +
       'being labelled. Selection is not a simple sort on the percentile: a test that was not performed, a value ' +
-      'awaiting verification, and the criterion-scored movement screen are all excluded, and ordering accounts for ' +
+      'awaiting verification are excluded, at most one metric per test contributes, and ordering accounts for ' +
       'how reliable each test is and how confident its reference set is.</div>' +
       '<div class="btn-row"><button class="btn btn-primary btn-sm" id="stProfiling">Save</button></div>' +
       '</div></div>' +
@@ -192,17 +192,6 @@
       '<div class="btn-row"><button class="btn btn-primary btn-sm" id="stAsymSave">Save</button></div>' +
       '</div></div>' +
 
-      '<div class="card" style="margin-bottom:16px"><div class="card-hd">' +
-      '<span class="card-ttl">Movement screen bands</span></div><div class="card-bd">' +
-      '<div class="grid g2">' +
-      f('"Acceptable" from', '<input class="big" type="number" id="stMovAcc" value="' +
-        set.movement.bands.acceptable + '">', '% of the achievable score') +
-      f('"Monitor" from', '<input class="big" type="number" id="stMovMon" value="' +
-        set.movement.bands.monitor + '">', '% of the achievable score') +
-      '</div>' +
-      '<div class="fineprint">' + U.esc(set.movement.disclaimer) + '</div>' +
-      '<div class="btn-row"><button class="btn btn-primary btn-sm" id="stMov">Save</button></div>' +
-      '</div></div>' +
 
       '<div class="card" style="margin-bottom:16px"><div class="card-hd">' +
       '<span class="card-ttl">Retest</span></div><div class="card-bd"><div class="grid g2">' +
@@ -494,18 +483,6 @@
     on('stAsymSave', function () {
       set.asymmetry.noteThresholdPct = Math.max(0, U.numVal(U.$('#stAsym', mount)) || 10);
       save('Inter-limb threshold updated');
-    });
-    on('stMov', function () {
-      set.movement.bands.acceptable = U.numVal(U.$('#stMovAcc', mount)) || 80;
-      set.movement.bands.monitor = U.numVal(U.$('#stMovMon', mount)) || 60;
-      /* keep the criterion level bands in step with the editable thresholds */
-      if (set.movement.criterionLevels) {
-        set.movement.criterionLevels[0].max = set.movement.bands.monitor;
-        set.movement.criterionLevels[1].min = set.movement.bands.monitor;
-        set.movement.criterionLevels[1].max = set.movement.bands.acceptable;
-        set.movement.criterionLevels[2].min = set.movement.bands.acceptable;
-      }
-      save('Movement bands updated');
     });
     on('stRetest', function () {
       set.retest.defaultWeeks = Math.max(1, U.numVal(U.$('#stRetestWeeks', mount)) || 12);

@@ -115,6 +115,7 @@
     var html = '<p class="pg-sub" style="margin-bottom:14px">Every test in the battery, in testing order.</p>';
     P.Tests.orderedTests().forEach(function (t) {
       var cat = P.Tests.category(t.category);
+      if (!cat) return;
       html += '<details class="disc"><summary><span>' + U.esc(t.name) +
         '</span><span class="badge badge-none">' + U.esc(cat.name) +
         (t.optional ? ' · optional' : '') + '</span></summary><div class="disc-bd">';
@@ -172,13 +173,13 @@
   function Q() {
     var qs = [
       ['Are all tests appropriate for combat athletes?',
-       'Nine of the thirteen are. The bench press is the weak link — it has no established relationship with any combat-specific quality, and it is included because gyms and athletes expect it rather than because the evidence demands it. It is optional and is weighted at half in the strength category score. The rotational throw is the most sport-relevant power test and also the most technique-sensitive, which is the trade-off it comes with.'],
+       'Yes, after trimming. The battery originally carried a rotational medicine-ball throw and a movement observation screen; both were removed, the throw because its distance is so technique-dependent that the number was carrying more noise than signal, and the screen because it is coach observation rather than measurement and did not belong alongside benchmarked results. The bench press is the remaining weak link — no established relationship with any combat-specific quality — and stays only because gyms expect it, optional and weighted at half.'],
       ['Is the testing battery too long?',
-       'Yes, for one session. Thirteen tests including three maximal bike efforts cannot all be valid in one visit, which is why the 30-second bike sprint was removed from the default single-session battery and why the two-session split is the recommended version. The single-session battery is a commercial compromise and is described as one.'],
+       'It was. Two tests have since been cut and the standalone 30-second bike sprint was removed from the default single-session battery, which leaves eleven. Three maximal bike efforts still cannot all be valid in one visit, so the two-session split remains the recommended version and the single-session battery is described as the commercial compromise it is.'],
       ['Which tests have the strongest evidence?',
        'The countermovement jump, the standing broad jump and the electronically timed 10 m sprint: reliable, well-documented, and sensitive to training change.'],
       ['Which have the weakest?',
-       'The movement screen (low inter-rater reliability, and weak evidence as a predictive tool — which is why it is presented as observation) and the air-bike tests (no published reliability data for fan bikes could be located at all). The rotational throw sits in between: reliable if the foot-position rule is enforced strictly, close to useless if it is not.'],
+       'The air-bike tests, by a distance: no published reliability data for fan bikes could be located at all, which is why a PGP reliability study on the specific machines used is the first internal research worth doing. Estimated 1RMs come next, since they carry the error of the test plus the error of the prediction equation.'],
       ['Are the AirBike protocols standardised enough?',
        'Within one machine, yes — provided the seat position is recorded and the warm-up is identical. Across machines, no, and nothing can make them so. The app therefore ties every bike benchmark to a machine family and refuses to score a result from a different one. A PGP reliability study on the specific bikes used is the highest-priority piece of internal research.'],
       ['Should the repeated-sprint test use 30, 45 or 60 seconds recovery?',
@@ -204,7 +205,7 @@
       ['Which metrics should contribute to category scores?',
        'Only the primary, benchmarked metric of each test — the one that is physiologically appropriate and has a matched reference set. Power takes all four power tests; strength takes the trap bar and chin-up at full weight and the bench and weighted chin-up at half; anaerobic takes peak and mean W/kg equally; repeated effort takes mean sprint power and decrement at 70/30.'],
       ['Which should stay separate?',
-       'Inter-limb differences (a difference, not a capacity), the fatigue index, total work, heart rate, BMI, estimated peak power from the jump, RSI-modified, and everything from the movement screen. These are reported as observations, with context, and none of them moves a category score.'],
+       'Inter-limb differences (a difference, not a capacity), the fatigue index, second-half fade on the 12-minute test, total work, distance, heart rate, BMI, estimated peak power from the jump and RSI-modified. These are reported as observations, with context, and none of them moves a category score.'],
       ['Is an overall score scientifically justified?',
        'No. Averaging power, strength, aerobic capacity and repeated-effort percentiles into one number implies those qualities are interchangeable and equally important. Two athletes with an identical composite can need opposite training, which makes the number worse than useless for the decision it looks like it is helping with.'],
       ['So should the system use a profile instead?',

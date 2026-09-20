@@ -65,11 +65,10 @@
     scoring: {
       method: 'mean_z',
       weights: {
-        /* POWER — equal weighting across the four power expressions. */
+        /* POWER — equal weighting across the three power expressions. */
         'cmj.height_cm': 1,
-        'broad_jump.distance_cm': 1,
-        'sl_broad_jump.best_cm': 1,
-        'mb_throw.best_cm': 1,
+        'broad_jump.distance_m': 1,
+        'sl_broad_jump.best_m': 1,
 
         /* SPEED — single test. */
         'sprint_10m.time_10m_s': 1,
@@ -94,20 +93,17 @@
 
         /* REPEATED EFFORT — 70/30 in favour of HOW MUCH power is produced
            over HOW FLAT the curve is. An athlete who paces sprint 1 gets a
-           flattering decrement with a poor mean power; weighting the amount
-           of power higher stops that from reading as a good result. */
-        'bike_repeated.mean_mean_w_per_kg': 0.7,
-        'bike_repeated.decrement_pct': 0.3,
-
-        /* MOVEMENT — single criterion score. */
-        'movement_screen.score_pct': 1
+           flattering loss-of-watts figure with a poor average; weighting the
+           amount of power higher stops that from reading as a good result. */
+        'bike_repeated.mean_peak_w_per_kg': 0.7,
+        'bike_repeated.decrement_pct': 0.3
       },
 
       /* A category score is reported only if at least this many benchmarked
          metrics in it produced a result. Below that, the category shows
          "Insufficient data" rather than a score built on one test. */
       minMetricsPerCategory: { power: 2, speed: 1, strength: 1, aerobic: 1,
-                               anaerobic: 1, repeated: 1, movement: 1 },
+                               anaerobic: 1, repeated: 1 },
 
       /* Band-derived percentiles are displayed rounded to this step, to
          avoid implying the system can distinguish 79th from 80th
@@ -127,7 +123,7 @@
          convenience index with no validation behind it.
          ---------------------------------------------------------------- */
       compositeEnabled: false,
-      compositeExcludes: ['movement'],
+      compositeExcludes: [],
       compositeLabel: 'Composite Physical Preparation Index (unvalidated)'
     },
 
@@ -194,27 +190,6 @@
       disclaimer: 'Reported as a difference in performance between sides. This is not an injury-risk score and is not a medical finding. Some difference between sides is normal, particularly in combat athletes, where stance produces a habitual lead and rear side.'
     },
 
-    /* ---------------- MOVEMENT SCREEN --------------------------------- */
-    movement: {
-      maxPerItem: 2,
-      /* Editable band thresholds for the criterion score. */
-      bands: { acceptable: 80, monitor: 60 },
-      /* The movement screen is scored against a criterion, not a population,
-         so it gets its OWN labels. Calling a movement screen result
-         "HIGH PERFORMANCE" would imply a percentile against other athletes,
-         which this score is not. */
-      criterionLevels: [
-        { id: 'limited',    name: 'LIMITATIONS NOTED', min: 0,  max: 60,
-          desc: 'One or more patterns were observed as clearly restricted. Review the individual items.' },
-        { id: 'monitor',    name: 'MONITOR',           min: 60, max: 80,
-          desc: 'Some patterns were observed as reduced. Worth addressing within the warm-up and accessory work.' },
-        { id: 'acceptable', name: 'ACCEPTABLE',        min: 80, max: 92,
-          desc: 'Range and control were observed as adequate for the training the athlete needs to do.' },
-        { id: 'full',       name: 'FULL RANGE OBSERVED', min: 92, max: 100,
-          desc: 'No meaningful restriction observed in the items assessed on the day.' }
-      ],
-      disclaimer: 'Movement scores are coach-observation data recorded on the day of testing. They are not a medical diagnosis, not an injury-risk score, and not a percentile against other athletes. Inter-rater reliability of subjective movement screens is poor to moderate, so scores recorded by different assessors are not comparable.'
-    },
 
     /* ---------------- RETEST ------------------------------------------ */
     retest: {
@@ -247,8 +222,8 @@
       /* Minutes per athlete, for the schedule estimator. Includes the rest
          periods written into each protocol. */
       durations: {
-        registration: 4, anthropometry: 3, movement_screen: 8, warmup: 12,
-        cmj: 4, broad_jump: 4, sl_broad_jump: 6, mb_throw: 7,
+        registration: 4, readiness: 2, anthropometry: 3, warmup: 12,
+        cmj: 4, broad_jump: 4, sl_broad_jump: 6,
         sprint_10m: 8, trapbar: 14, chinup: 4, weighted_chinup: 8,
         bench: 12, bike_12min: 20, bike_30s: 12, bike_repeated: 16,
         recovery_gap: 30, debrief: 5
@@ -304,8 +279,7 @@
       { id: 'schwinn_airdyne', label: 'Schwinn Airdyne', family: 'airdyne' },
       { id: 'other', label: 'Other / unlisted', family: 'other' }
     ],
-    medBall: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-    trapBar: [
+      trapBar: [
       { id: 'unknown', label: 'Not recorded' },
       { id: 'standard_25', label: 'Standard hex bar (~25 kg)' },
       { id: 'open_25', label: 'Open trap bar (~25 kg)' },
@@ -425,13 +399,6 @@
                'Check the aerobic score: repeated-effort capacity is underpinned by aerobic fitness, and a low aerobic score usually needs addressing first.'],
         mid:  ['Maintain 1 weekly repeated-effort exposure, monitoring how it interacts with sparring load.'],
         high: ['Maintain. This is a competitive strength of the profile.']
-      },
-      movement: {
-        low:  ['Review the individual screen items and address the specific restricted patterns within the warm-up and accessory work.',
-               'Where a pattern is restricted, adjust exercise selection and range rather than forcing the position under load.',
-               'If any item was painful, refer to a qualified medical professional. Do not train through pain on the basis of this screen.'],
-        mid:  ['Maintain range with targeted work in the warm-up for the lower-scoring items.'],
-        high: ['No specific action indicated from the screen. Maintain current warm-up practice.']
       }
     },
     /* Cross-category rules: patterns that only show up when two scores are

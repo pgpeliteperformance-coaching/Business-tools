@@ -154,11 +154,11 @@
       raw: o.raw || {},                   /* directly entered values */
       values: o.values || {},             /* raw + derived, filled by derive() */
       sprints: o.sprints || null,         /* repeated-sprint test only */
-      items: o.items || null,             /* movement screen only */
+      items: o.items || null,             /* reserved for item-scored tests */
       config: o.config || null,           /* protocol config actually used */
       equipmentNote: o.equipmentNote || '',
       notes: o.notes || '',
-      assessor: o.assessor || ''          /* movement screen: who scored it */
+      assessor: o.assessor || ''          /* who scored it, where that matters */
     };
     if (def && def.isScreen && !r.items) r.items = {};
     if (def && def.defaultConfig && !r.config) {
@@ -167,7 +167,7 @@
     if (def && def.id === 'bike_repeated' && !r.sprints) {
       r.sprints = [];
       for (var i = 0; i < (r.config ? r.config.sprints : 6); i++) {
-        r.sprints.push({ peak_watts: null, mean_watts: null });
+        r.sprints.push({ peak_watts: null });
       }
     }
     return r;
@@ -270,15 +270,9 @@
         break;
 
       case 'sl_broad_jump':
-        put(v, 'best_cm', Calc.best([v.left_cm, v.right_cm], 'high'));
-        put(v, 'asymmetry_pct', Calc.calculateAsymmetry(v.left_cm, v.right_cm));
-        v._weakerSide = Calc.asymmetrySide(v.left_cm, v.right_cm);
-        break;
-
-      case 'mb_throw':
-        put(v, 'best_cm', Calc.best([v.left_cm, v.right_cm], 'high'));
-        put(v, 'asymmetry_pct', Calc.calculateAsymmetry(v.left_cm, v.right_cm));
-        v._weakerSide = Calc.asymmetrySide(v.left_cm, v.right_cm);
+        put(v, 'best_m', Calc.best([v.left_m, v.right_m], 'high'));
+        put(v, 'asymmetry_pct', Calc.calculateAsymmetry(v.left_m, v.right_m));
+        v._weakerSide = Calc.asymmetrySide(v.left_m, v.right_m);
         break;
 
       case 'sprint_10m':
@@ -304,96 +298,89 @@
         break;
 
       case 'weighted_chinup': {
+        /* A tested single: body mass plus the load, straight over body mass.
+           No prediction equation — there is nothing to predict. */
         var sys = Calc.calculateSystemMass(v.added_kg, bw);
         put(v, 'system_mass_kg', sys);
-        /* estimated 1RM of the SYSTEM mass, then expressed relative to BW */
-        var est = Calc.estimateOneRepMax(sys, v.reps);
-        put(v, 'est_1rm_system_kg', est);
-        put(v, 'rel_system_mass', Calc.calculateRelativeStrength(est, bw));
+        put(v, 'rel_system_mass', Calc.calculateRelativeStrength(sys, bw));
         break;
       }
 
       case 'bike_12min': {
-        var dur = def.durationS;
-        /* Mean watts may be entered directly, or back-calculated from work. */
-        if (v.mean_watts === undefined && v.total_work_kj !== undefined) {
-          put(v, 'mean_watts', Calc.meanPowerFromWork(v.total_work_kj, dur));
+        /* Average the minute readings that were actually taken. A missed
+           minute is left out of the average, not counted as zero. */
+        var mins = [];
+        for (var q = 1; q <= (def.minuteSamples || 12); q++) mins.push(v['min_' + q]);
+        var got = Stats.numeric(mins);
+        if (got.length) {
+          put(v, 'mean_watts', Stats.mean(got));
+          v._minutesRecorded = got.length;
+          v._minutesExpected = def.minuteSamples || 12;
+          /* Pacing, made visible rather than hidden inside the average. */
+          var half = Math.floor((def.minuteSamples || 12) / 2);
+          var first = Stats.numeric(mins.slice(0, half));
+          var second = Stats.numeric(mins.slice(half));
+          if (first.length && second.length) {
+            var f = Stats.mean(first);
+            if (f > 0) put(v, 'fade_pct', (f - Stats.mean(second)) / f * 100);
+          }
         }
-        if (v.total_work_kj === undefined) {
-          put(v, 'total_work_kj', Calc.calculateWorkKJ(v.mean_watts, dur));
-        }
+        put(v, 'total_work_kj', Calc.calculateWorkKJ(v.mean_watts, def.durationS));
         put(v, 'w_per_kg', Calc.calculateWPerKg(v.mean_watts, bw));
         break;
       }
 
       case 'bike_30s': {
-        var d30 = def.durationS;
-        if (v.mean_watts === undefined && v.total_work_kj !== undefined) {
-          put(v, 'mean_watts', Calc.meanPowerFromWork(v.total_work_kj, d30));
+        /* Peak, mean and minimum all come out of the three ten-second
+           readings, which is why the fatigue index is computable at all. */
+        var splits = Stats.numeric((def.splitSamples || []).map(function (k) { return v[k]; }));
+        if (splits.length) {
+          put(v, 'peak_watts', Math.max.apply(null, splits));
+          put(v, 'mean_watts', Stats.mean(splits));
+          put(v, 'min_watts', Math.min.apply(null, splits));
+          v._splitsRecorded = splits.length;
         }
-        if (v.total_work_kj === undefined) {
-          put(v, 'total_work_kj', Calc.calculateWorkKJ(v.mean_watts, d30));
-        }
+        put(v, 'total_work_kj', Calc.calculateWorkKJ(v.mean_watts, def.durationS));
         put(v, 'peak_w_per_kg', Calc.calculateWPerKg(v.peak_watts, bw));
         put(v, 'mean_w_per_kg', Calc.calculateWPerKg(v.mean_watts, bw));
-        /* Only computable when the console reports a minimum power. */
         put(v, 'fatigue_index_pct', Calc.calculateFatigueIndex(v.peak_watts, v.min_watts));
         break;
       }
 
       case 'bike_repeated': {
+        /* One number per sprint: its maximum watts. Everything else is
+           calculated from those. */
         var cfg = result.config || def.defaultConfig;
         var sprints = result.sprints || [];
         var peaks = sprints.map(function (s) { return s ? s.peak_watts : null; });
-        var means = sprints.map(function (s) { return s ? s.mean_watts : null; });
-        var nPeak = Stats.numeric(peaks).length, nMean = Stats.numeric(means).length;
-
+        var nPeak = Stats.numeric(peaks).length;
         var pSum = Calc.summariseRepeatedSprints(peaks);
-        var mSum = Calc.summariseRepeatedSprints(means);
 
         put(v, 'best_peak_watts', pSum.best);
+        put(v, 'worst_peak_watts', pSum.worst);
         put(v, 'mean_peak_watts', pSum.mean);
-        put(v, 'mean_mean_watts', mSum.mean);
-        put(v, 'mean_mean_w_per_kg', Calc.calculateWPerKg(mSum.mean, bw));
+        put(v, 'mean_peak_w_per_kg', Calc.calculateWPerKg(pSum.mean, bw));
 
-        /* Decrement is computed from the sprint AVERAGE powers, and ONLY if
-           the full configured set was completed. A decrement from a partial
-           set is not comparable and is not reported. */
-        var full = (nMean === cfg.sprints);
+        /* Loss of watts needs the whole set: it is measured against the best
+           sprint, so a partial set is not comparable with anything. */
+        var full = (nPeak === cfg.sprints);
         if (full) {
-          put(v, 'decrement_pct', mSum.decrementPct);
-          put(v, 'best_worst_pct', mSum.bestWorstPct);
-          put(v, 'slope_w_per_sprint', mSum.slopePerSprint);
-          put(v, 'total_work_kj', Stats.sum(Stats.numeric(means).map(function (w) {
-            return w * cfg.workS / 1000;
-          })));
+          put(v, 'decrement_pct', pSum.decrementPct);
+          put(v, 'best_worst_pct', pSum.bestWorstPct);
+          put(v, 'slope_w_per_sprint', pSum.slopePerSprint);
         }
-        v._sprintsRecorded = nMean;
+        v._sprintsRecorded = nPeak;
         v._sprintsExpected = cfg.sprints;
         v._setComplete = full;
-        v._profilePct = mSum.profilePct;
-        if (!full && nMean > 0) {
-          v._partialNote = 'Decrement and total work not computed: ' + nMean + ' of ' +
-            cfg.sprints + ' sprints recorded. A decrement from a partial set is not comparable.';
+        v._profilePct = pSum.profilePct;
+        if (!full && nPeak > 0) {
+          v._partialNote = 'Loss of watts not computed: ' + nPeak + ' of ' + cfg.sprints +
+            ' sprints recorded. It is measured against the best sprint, so a partial set is not comparable.';
         }
-        /* Peak power from sprint 1 doubles as an anaerobic power reference
-           when the standalone 30-s test was not performed. Reported, not
-           benchmarked against the 30-s reference set. */
         if (Calc.num(peaks[0]) !== null) v._sprint1PeakWatts = Calc.num(peaks[0]);
         break;
       }
 
-      case 'movement_screen': {
-        var ms = Calc.movementScorePct(result.items || {}, Settings.DEFAULTS.movement.maxPerItem);
-        if (ms) {
-          put(v, 'score_pct', ms.pct);
-          v._itemsScored = ms.scored;
-          v._itemsTotal = (def.items || []).length;
-          v._rawTotal = ms.total;
-          v._rawMax = ms.max;
-        }
-        break;
-      }
     }
 
     result.values = v;

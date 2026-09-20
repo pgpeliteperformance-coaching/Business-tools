@@ -151,10 +151,7 @@
       eq(Engine.calculatePerformanceLevel(90).name, 'HIGH PERFORMANCE');
       eq(Engine.calculatePerformanceLevel(100).name, 'HIGH PERFORMANCE');
       eq(Engine.calculatePerformanceLevel(null), null);
-      /* the movement screen uses its own labels, not performance levels */
-      eq(Engine.calculateCriterionLevel(100).name, 'FULL RANGE OBSERVED');
-      eq(Engine.calculateCriterionLevel(50).name, 'LIMITATIONS NOTED');
-      return 'boundaries 25 / 65 / 90 for percentiles; separate labels for the criterion score';
+      return 'boundaries 25 / 65 / 90 behave as specified';
     });
 
     /* ================= ATHLETE A — NORMAL ============================== */
@@ -173,7 +170,9 @@
     t('Athlete A: band-derived percentiles display rounded to the nearest 5', function () {
       asA.metricScores.forEach(function (m) {
         if (m.status !== 'scored' || m.precision !== 'band') return;
-        if (m.scoreType === 'criterion') return;   /* not a percentile at all */
+        /* 1 and 99 are the deliberate floor and ceiling — no athlete is ever
+           shown as 0th or 100th percentile — so they sit outside the rule. */
+        if (m.displayPercentile === 1 || m.displayPercentile === 99) return;
         eq(m.displayPercentile % 5, 0, m.testId + '.' + m.metricKey + ' should be a multiple of 5');
       });
       return 'no false precision on provisional benchmarks';
@@ -204,16 +203,6 @@
              asA.profile.priorities.length + ' priorities';
     });
 
-    t('Athlete A: movement screen is a criterion score, not a percentile', function () {
-      var m = met(asA, 'movement_screen', 'score_pct');
-      eq(m.scoreType, 'criterion');
-      eq(cat(asA, 'movement').scoreType, 'criterion');
-      var inProfile = asA.profile.strengths.concat(asA.profile.priorities)
-        .filter(function (x) { return x.categoryId === 'movement'; });
-      eq(inProfile.length, 0, 'movement must not appear in strengths/priorities');
-      return 'criterion score ' + m.value.toFixed(0) + '% excluded from the profile lists';
-    });
-
     t('Athlete A: no overall score is produced by default', function () {
       eq(asA.composite.enabled, false);
       ok(asA.composite.note.length > 50, 'must explain why there is no overall score');
@@ -225,7 +214,7 @@
     t('Athlete B: very high results do not break or exceed the scale', function () {
       Tests.CATEGORIES.forEach(function (c) {
         var cs = cat(asB, c.id);
-        if (cs.status !== 'scored' || cs.scoreType === 'criterion') return;
+        if (cs.status !== 'scored') return;
         ok(cs.displayPercentile <= 99, c.id + ' must not exceed 99');
         ok(isFinite(cs.percentile), c.id + ' must be finite');
       });
@@ -329,13 +318,6 @@
              cs.coveragePct + '%';
     });
 
-    t('Athlete D: unscored movement items excluded from the denominator', function () {
-      var v = d.sessions[0].results.movement_screen.values;
-      eq(v._itemsScored, 11, 'one item was left blank');
-      eq(v._rawMax, 22, 'denominator must be 11 items x 2, not 12 x 2');
-      return '11 of 12 items scored, max 22 not 24';
-    });
-
     t('Athlete D: readiness flag raises a test-restriction notice', function () {
       eq(d.sessions[0].readiness.flagged, true);
       ok(asD.issues.some(function (i) {
@@ -360,25 +342,6 @@
       eq(m.status, 'scored');
       eq(m.benchmark.id, 'chin_f_heavy', '68.5 kg female belongs in the heavier band');
       return 'matched ' + m.benchmark.bwBand.label;
-    });
-
-    t('Athlete E: 3 kg ball matched to the 3 kg reference set', function () {
-      var m = met(asE, 'mb_throw', 'best_cm');
-      eq(m.status, 'scored');
-      eq(m.benchmark.conditions.ballMassKg, 3);
-      return 'ball-mass-specific matching confirmed';
-    });
-
-    t('A different ball mass gets no percentile rather than a wrong one', function () {
-      var s = JSON.parse(JSON.stringify(e.sessions[0]));
-      s.results.mb_throw.raw.ball_mass_kg = 6;
-      Model.deriveSession(s);
-      var as = Engine.assessSession(s, e.athlete, db);
-      var m = met(as, 'mb_throw', 'best_cm');
-      eq(m.status, 'insufficient');
-      ok(m.reason.indexOf('ball mass') !== -1 || m.reason.indexOf('Medicine-ball') !== -1,
-         'reason should name the ball mass');
-      return '6 kg ball -> insufficient reference data, reason given';
     });
 
     t('An unrecorded air bike gets no percentile', function () {
@@ -530,14 +493,16 @@
       return 'impossible split ordering rejected';
     });
 
-    t('Athlete G: mean power above peak power is caught', function () {
+    t('Athlete G: a paced 30-second sprint is caught', function () {
       ok(asG.issues.some(function (i) {
-        return i.scope === 'bike_30s' && i.message.indexOf('cannot exceed peak') !== -1;
-      }));
-      ok(asG.issues.some(function (i) {
-        return i.scope === 'bike_repeated' && i.message.indexOf('exceeds peak power') !== -1;
-      }), 'per-sprint check expected');
-      return 'both the 30 s test and the per-sprint check caught it';
+        return i.scope === 'bike_30s' && i.message.indexOf('higher in the last ten seconds') !== -1;
+      }), 'expected the paced-start notice');
+      /* peak, mean and minimum are derived from the three readings, so they
+         can no longer contradict one another — the failure mode moved */
+      var v = g.sessions[0].results.bike_30s.values;
+      ok(v.peak_watts >= v.mean_watts && v.mean_watts >= v.min_watts,
+         'derived peak/mean/min must be ordered by construction');
+      return 'rising power across the effort flagged; derived values cannot contradict';
     });
 
     t('Athlete G: a paced first sprint is called out', function () {
@@ -551,6 +516,94 @@
       ok(asG.categoryScores.length === Tests.CATEGORIES.length);
       ok(asG.coverage.total > 0);
       return 'bad data degrades gracefully; ' + asG.coverage.scored + ' metrics still scored';
+    });
+
+    /* ================= THE RESHAPED TESTS ============================== */
+    t('Jump distances are recorded and benchmarked in metres', function () {
+      var m = met(asA, 'broad_jump', 'distance_m');
+      eq(m.unit, 'm');
+      ok(m.value > 1 && m.value < 4, 'a broad jump should be a metre value, got ' + m.value);
+      eq(m.benchmark.unit, 'm');
+      var sl = met(asA, 'sl_broad_jump', 'best_m');
+      eq(sl.unit, 'm');
+      ok(sl.value > 0.6 && sl.value < 3);
+      return 'broad jump ' + m.value + ' m, single-leg ' + sl.value + ' m';
+    });
+
+    t('Weighted chin-up is a tested single with no prediction equation', function () {
+      var b = A('qc_b');
+      var as = Engine.assessSession(b.sessions[0], b.athlete, db);
+      var m = met(as, 'weighted_chinup', 'rel_system_mass');
+      eq(m.status, 'scored');
+      eq(Tests.metric('weighted_chinup', 'reps'), null, 'there should be no reps field any more');
+      var v = b.sessions[0].results.weighted_chinup.values;
+      near(v.system_mass_kg, b.sessions[0].bodyMassKg + v.added_kg, 0.001);
+      near(m.value, v.system_mass_kg / b.sessions[0].bodyMassKg, 0.0001,
+           'relative system mass must be the raw ratio, not an estimate');
+      return '(' + b.sessions[0].bodyMassKg + ' + ' + v.added_kg + ') / ' +
+             b.sessions[0].bodyMassKg + ' = ' + m.value.toFixed(3) + ' x BW';
+    });
+
+    t('12-minute test averages the minute readings and shows the fade', function () {
+      var v = a.sessions[0].results.bike_12min.values;
+      eq(v._minutesRecorded, 12);
+      var mins = [];
+      for (var i = 1; i <= 12; i++) mins.push(v['min_' + i]);
+      near(v.mean_watts, Stats.mean(mins), 0.001, 'average must be the mean of the minutes');
+      ok(v.fade_pct !== undefined, 'second-half fade should be reported');
+      ok(v.distance_km > 0, 'total distance should be recorded');
+      /* a missed minute is dropped, never counted as zero */
+      var s2 = JSON.parse(JSON.stringify(a.sessions[0]));
+      delete s2.results.bike_12min.raw.min_7;
+      Model.deriveSession(s2);
+      eq(s2.results.bike_12min.values._minutesRecorded, 11);
+      ok(s2.results.bike_12min.values.mean_watts > 100,
+         'a missing minute must not drag the average toward zero');
+      return '12 readings -> ' + v.mean_watts.toFixed(1) + ' W, fade ' +
+             v.fade_pct.toFixed(1) + '%, ' + v.distance_km + ' km';
+    });
+
+    t('30-second sprint derives peak, mean and minimum from the 10 s readings', function () {
+      var v = a.sessions[0].results.bike_30s.values;
+      eq(v.peak_watts, Math.max(v.w_0_10, v.w_10_20, v.w_20_30));
+      eq(v.min_watts, Math.min(v.w_0_10, v.w_10_20, v.w_20_30));
+      near(v.mean_watts, (v.w_0_10 + v.w_10_20 + v.w_20_30) / 3, 0.001);
+      ok(v.fatigue_index_pct > 0, 'the fatigue index is now always computable');
+      near(v.fatigue_index_pct, (v.peak_watts - v.min_watts) / v.peak_watts * 100, 0.001);
+      return v.w_0_10 + '/' + v.w_10_20 + '/' + v.w_20_30 + ' W -> peak ' + v.peak_watts +
+             ', mean ' + v.mean_watts.toFixed(0) + ', fatigue ' + v.fatigue_index_pct.toFixed(1) + '%';
+    });
+
+    t('Repeated sprint works from one max-watts number per sprint', function () {
+      var v = a.sessions[0].results.bike_repeated.values;
+      var peaks = a.sessions[0].results.bike_repeated.sprints.map(function (x) { return x.peak_watts; });
+      ok(peaks.every(function (x) { return typeof x === 'number'; }), 'peaks only');
+      eq(a.sessions[0].results.bike_repeated.sprints[0].mean_watts, undefined,
+         'there should be no per-sprint average to enter any more');
+      eq(v.best_peak_watts, Math.max.apply(null, peaks));
+      eq(v.worst_peak_watts, Math.min.apply(null, peaks));
+      near(v.mean_peak_watts, Stats.mean(peaks), 0.001);
+      near(v.decrement_pct, Calc.calculatePerformanceDecrement(peaks), 0.001);
+      var m = met(asA, 'bike_repeated', 'mean_peak_w_per_kg');
+      eq(m.status, 'scored');
+      return 'best ' + v.best_peak_watts + ' W, average ' + v.mean_peak_watts.toFixed(0) +
+             ' W, loss ' + v.decrement_pct.toFixed(1) + '%';
+    });
+
+    t('The removed tests are gone from every layer', function () {
+      eq(Tests.get('mb_throw'), null);
+      eq(Tests.get('movement_screen'), null);
+      eq(Tests.category('movement'), null);
+      eq(Tests.CATEGORIES.length, 6);
+      eq(Tests.TESTS.length, 11);
+      ok(!Benchmarks.BENCHMARKS.some(function (b) {
+        return b.testId === 'mb_throw' || b.testId === 'movement_screen';
+      }), 'no orphan reference sets');
+      ok(!Object.keys(Settings.DEFAULTS.scoring.weights).some(function (k) {
+        return k.indexOf('mb_throw') === 0 || k.indexOf('movement') === 0;
+      }), 'no orphan weights');
+      ok(!asA.categoryScores.some(function (c) { return c.categoryId === 'movement'; }));
+      return '11 tests across 6 categories';
     });
 
     /* ================= PGP INTERNAL NORMS ============================== */
@@ -701,10 +754,9 @@
         eq(d.bike_12min__w_per_kg, '', 'a not-tested bike value must export as empty');
         eq(d.chinup__reps, '', 'a not-tested rep count must export as empty, not 0');
         eq(d.sprint_10m__not_tested_reason, 'facility', 'the reason must be exported');
+        eq(d.bike_12min__min_1, '', 'an untested minute reading must export empty');
         /* and a tested value must still be present */
         ok(d.cmj__height_cm !== '', 'a tested value must still export');
-        /* blank movement item stays blank rather than becoming 0 */
-        eq(d.movement__shoulder_flex_r, '', 'an unscored screen item must export empty');
         return 'not-tested cells export empty, with the reason preserved';
       });
     }
