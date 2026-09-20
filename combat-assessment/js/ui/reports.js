@@ -70,300 +70,287 @@
   }
 
   /* ====================== REPORT ====================== */
+  /* Laid out as a document, not a web page that happens to print. Page 1 is
+     the athlete's page — who they are, the profile, and the two or three
+     things to do about it. The numbers, the workings and the caveats follow.
+     Nothing is dropped; things that used to repeat on every row are now said
+     once, in the place they belong. */
   function renderReport(mount, session) {
     var S = P.Store, set = S.settings(), C = P.Settings.REPORT_COPY;
     var a = S.athlete(session.athleteId);
-    var gym = S.gym(session.gymId);
+    var gym = a ? S.gym(a.gymId) : null;
+    var venue = S.gym(session.gymId);
     var as = P.Engine.assessSession(session, a, S.db, set);
     var prevSession = S.previousSession(session);
-    var cmp = null;
-    if (prevSession) {
-      cmp = P.Engine.compareSessions(as, P.Engine.assessSession(prevSession, a, S.db, set), set);
-    }
+    var cmp = prevSession
+      ? P.Engine.compareSessions(as, P.Engine.assessSession(prevSession, a, S.db, set), set) : null;
     var targets = P.Engine.suggestRetestTargets(as, set);
     var saved = (S.db.retestTargets || {})[session.id] || {};
 
-    var html = '<div class="no-print btn-row" style="margin-bottom:14px">' +
+    var html = '<div class="no-print btn-row" style="margin-bottom:16px">' +
       '<button class="btn btn-sm btn-ghost" id="rpBack">← All reports</button>' +
       '<button class="btn btn-sm btn-primary" id="rpPrint">Print / save as PDF</button>' +
       '<button class="btn btn-sm" id="rpEdit">Edit this session</button>' +
       (cmp ? '<button class="btn btn-sm" id="rpToggle">' +
-        (P.App.ctx.compare ? 'Hide retest comparison' : 'Show retest comparison') + '</button>' : '') +
+        (P.App.ctx.compare ? 'Hide the change section' : 'Show what changed') + '</button>' : '') +
       '</div>';
 
     html += '<div class="rpt">';
 
-    /* ---------------- cover ---------------- */
-    html += '<div class="rpt-cover">' +
-      '<div class="rpt-brand">' + U.esc(set.branding.product) + '</div>' +
-      '<div class="rpt-title">Athlete Performance Report</div>' +
-      '<div class="rpt-athlete">' + U.esc(a ? a.name : 'Unknown athlete') + '</div>' +
-      '<div class="fineprint" style="margin-top:4px">' + U.esc(set.branding.tagline) + '</div>' +
-      '</div>';
+    /* ---------------- masthead and identity ---------------- */
+    var meta = [
+      U.date(session.date),
+      session.ageAtTest !== null ? session.ageAtTest + ' yrs' : null,
+      a && a.sex ? U.sexLabel(a.sex) : null,
+      session.bodyMassKg !== null ? U.fmt(session.bodyMassKg, 1) + ' kg' : null,
+      session.heightCm !== null ? U.fmt(session.heightCm, 0) + ' cm' : null,
+      a ? U.sportLabel(a.sport) : null,
+      a && a.weightClass ? a.weightClass : null,
+      gym ? gym.name : null
+    ].filter(Boolean);
 
-    html += '<div class="grid g2 rpt-sec">' +
-      '<div class="card"><div class="card-bd"><dl class="kv">' +
-      kv('Athlete', a ? a.name : '—') +
-      kv('Testing date', U.date(session.date)) +
-      kv('Age at test', session.ageAtTest) +
-      kv('Sex', a && a.sex ? U.sexLabel(a.sex) : 'Not recorded') +
-      kv('Body mass', session.bodyMassKg === null ? null : U.fmt(session.bodyMassKg, 1) + ' kg') +
-      kv('Height', session.heightCm === null ? null : U.fmt(session.heightCm, 0) + ' cm') +
-      '</dl></div></div>' +
-      '<div class="card"><div class="card-bd"><dl class="kv">' +
-      kv('Sport', a ? U.sportLabel(a.sport) : '—') +
-      kv('Competitive level', a ? U.levelLabel(a.competitiveLevel) : '—') +
-      kv('Weight class', a ? a.weightClass : '') +
-      kv('Gym', gym ? gym.name : '') +
-      kv('Coach', session.coach) +
-      kv('Tester', session.tester) +
-      kv('Protocol version', session.protocolVersion) +
-      kv('Protocol confirmed', session.protocolConfirmed ? 'Yes' : 'NO — treat as non-standardised') +
-      '</dl></div></div></div>';
+    html += '<header class="rpt-head">' +
+      '<div class="rpt-mast">' +
+      '<span class="rpt-mark">PGP</span>' +
+      '<span class="rpt-brandline">Combat Athlete Performance Assessment</span>' +
+      '<span class="rpt-proto">' + U.esc(session.protocolVersion) + '</span>' +
+      '</div>' +
+      '<h1 class="rpt-name">' + U.esc(a ? a.name : 'Athlete') + '</h1>' +
+      '<div class="rpt-meta">' + meta.map(U.esc).join('<span class="rpt-sep">·</span>') + '</div>' +
+      '</header>';
 
-    /* ---------------- how to read this ---------------- */
-    html += '<div class="rpt-sec"><div class="rpt-sec-h">How to read this report</div>' +
-      '<div class="card"><div class="card-bd">' +
-      '<p style="line-height:1.65">' + U.esc(C.intro) + '</p>' +
-      '<p class="fineprint" style="margin-top:10px">' + U.esc(C.levelCaveat) + '</p>' +
-      (as.usesProvisional ? '<div style="margin-top:12px">' + U.notice('warning',
-        U.esc(C.provisionalNotice)) + '</div>' : '') +
-      '</div></div></div>';
+    /* one line that says what the report found */
+    var top = as.profile.strongestCategories[0];
+    var low = as.profile.weakestCategories[0];
+    if (top && low && top.categoryId !== low.categoryId) {
+      html += '<div class="rpt-headline">' +
+        '<div><span class="rpt-hl-k">Strongest</span><span class="rpt-hl-v">' +
+        U.esc(top.categoryName) + '</span><span class="rpt-hl-n">' +
+        U.ordSup(top.displayPercentile) + '</span></div>' +
+        '<div><span class="rpt-hl-k">Develop first</span><span class="rpt-hl-v">' +
+        U.esc(low.categoryName) + '</span><span class="rpt-hl-n">' +
+        U.ordSup(low.displayPercentile) + '</span></div>' +
+        '</div>';
+    }
 
-    /* ---------------- performance summary ---------------- */
-    html += '<div class="rpt-sec"><div class="rpt-sec-h">Performance summary</div>' +
-      '<div class="grid g2"><div class="card"><div class="card-hd"><span class="card-ttl">Profile</span>' +
-      '<span class="card-note">percentile by category</span></div>' +
-      '<div class="card-bd"><div id="rpRadar"></div></div></div>' +
-      '<div class="card"><div class="card-hd"><span class="card-ttl">Category scores</span></div>' +
-      '<div class="card-bd"><div id="rpBars"></div>' + U.levelLegend(set) + '</div></div></div>';
-
-    /* category detail rows with interpretation */
-    html += '<div class="card" style="margin-top:16px"><div class="card-bd">';
+    /* ---------------- profile ---------------- */
+    html += '<section class="rpt-sec"><h2 class="rpt-h">Performance profile</h2>' +
+      '<div class="rpt-profile"><div class="rpt-radar"><div id="rpRadar"></div></div>' +
+      '<div class="rpt-cats">';
     as.categoryScores.forEach(function (c) {
-      html += '<div style="padding:10px 0;border-bottom:1px solid var(--border)">' +
-        U.percentileBar({
-          label: c.categoryName,
-          sub: c.status === 'scored'
-            ? 'from ' + c.n + ' test' + (c.n === 1 ? '' : 's') +
-              (c.coveragePct !== undefined ? ' · ' + c.coveragePct + '% of this category tested' : '')
-            : null,
-          percentile: c.status === 'scored' ? c.percentile : null,
-          displayPercentile: c.displayPercentile, level: c.level, scoreType: c.scoreType,
-          emptyText: 'Insufficient reference data', tip: c.status === 'scored' ? c.method : c.reason
-        }) +
-        '<div class="fineprint" style="margin-top:2px">' +
-        (c.status === 'scored'
-          ? U.esc(c.level ? c.level.desc : '') + ' <span style="color:var(--text-muted)">' + U.esc(c.blurb) + '</span>'
-          : '<b>Insufficient data.</b> ' + U.esc(c.reason || '')) +
-        '</div></div>';
+      var lv = c.level ? U.levelIndex(c.level.name) : 0;
+      html += '<div class="rpt-cat">' +
+        '<div class="rpt-cat-name">' + U.esc(c.categoryName) +
+        '<small>' + (c.status === 'scored'
+          ? 'from ' + c.n + ' test' + (c.n === 1 ? '' : 's')
+          : 'no benchmarked result') + '</small></div>' +
+        '<div class="rpt-cat-track">' + (c.status === 'scored'
+          ? '<span class="rpt-cat-fill lv' + (lv || 1) + '" style="width:' +
+            Math.max(2, Math.min(100, c.percentile)) + '%"></span>' +
+            [25, 65, 90].map(function (t) {
+              return '<span class="rpt-cat-tick" style="left:' + t + '%"></span>';
+            }).join('')
+          : '') + '</div>' +
+        '<div class="rpt-cat-num">' + (c.status === 'scored'
+          ? U.ordSup(c.displayPercentile) : '<span class="rpt-na">—</span>') + '</div>' +
+        '<div class="rpt-cat-lv">' + (c.status === 'scored'
+          ? '<span class="rpt-lv lv' + lv + '">' + U.esc(c.level.name) + '</span>'
+          : '<span class="rpt-na">Insufficient reference data</span>') + '</div>' +
+        '</div>';
     });
     html += '</div></div>';
+    html += '<div class="rpt-scale">' + set.levels.map(function (l, i) {
+      return '<span><i class="lv' + (i + 1) + '"></i>' + U.esc(l.name) +
+        ' <b>' + l.min + '–' + l.max + '</b></span>';
+    }).join('') + '</div>';
+    html += '<p class="rpt-note">' + U.esc(C.levelCaveat) + '</p>';
+    html += '</section>';
 
-    /* composite */
-    html += '<div class="card" style="margin-top:16px"><div class="card-bd">';
-    if (as.composite.enabled && as.composite.status === 'scored') {
-      html += '<div class="stat-lbl">' + U.esc(as.composite.label) + '</div>' +
-        '<div class="hero-num">' + U.ordSup(as.composite.displayPercentile) + '</div>' +
-        '<div style="margin-top:8px">' + U.levelBadge(as.composite.level) + '</div>' +
-        '<div class="fineprint" style="margin-top:10px">' + U.esc(as.composite.note) + '</div>';
-    } else {
-      html += '<div class="stat-lbl">Overall score</div>' +
-        '<div class="fineprint" style="margin-top:6px">' + U.esc(as.composite.note) + '</div>';
-    }
-    html += '</div></div></div>';
+    /* ---------------- strengths and priorities ---------------- */
+    html += '<section class="rpt-sec rpt-two">';
+    html += '<div><h2 class="rpt-h">Strengths</h2>' +
+      (as.profile.strengths.length
+        ? '<ol class="rpt-list">' + as.profile.strengths.map(function (x) {
+            return '<li><span class="rpt-li-n">' + U.ordSup(x.percentile) + '</span>' +
+              '<span class="rpt-li-b"><b>' + U.esc(x.label) + '</b>' +
+              '<small>' + U.esc(x.category) + ' · ' + U.esc(x.level || '') + '</small></span></li>';
+          }).join('') + '</ol>'
+        : '<p class="rpt-note">' + U.esc(C.noStrengths) + '</p>') + '</div>';
+    html += '<div><h2 class="rpt-h">Develop next</h2>' +
+      (as.profile.priorities.length
+        ? '<ol class="rpt-list">' + as.profile.priorities.map(function (x) {
+            return '<li><span class="rpt-li-n">' + U.ordSup(x.percentile) + '</span>' +
+              '<span class="rpt-li-b"><b>' + U.esc(x.label) + '</b>' +
+              '<small>' + U.esc(x.category) + ' · ' + U.esc(x.level || '') + '</small></span></li>';
+          }).join('') + '</ol>'
+        : '<p class="rpt-note">' + U.esc(C.noPriorities) + '</p>') + '</div>';
+    html += '</section>';
 
-    /* ---------------- test results table ---------------- */
-    html += '<div class="rpt-sec rpt-break"><div class="rpt-sec-h">Test results</div>' +
-      '<div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr>' +
-      '<th>Test</th><th class="num">Result</th><th class="num">Relative result</th>' +
-      '<th class="num">Percentile</th><th>Performance level</th><th>Reference</th>' +
-      '</tr></thead><tbody>';
+    /* ---------------- results ---------------- */
+    html += '<section class="rpt-sec rpt-break"><h2 class="rpt-h">Results</h2>' +
+      '<div class="rpt-scroll"><table class="rpt-tbl"><thead><tr>' +
+      '<th>Test</th><th class="n">Recorded</th><th class="n">Benchmarked</th>' +
+      '<th class="n">Percentile</th><th>Level</th></tr></thead><tbody>';
 
+    var refsUsed = {};
     P.Tests.orderedTests().forEach(function (t) {
       var r = session.results[t.id];
       var scores = as.metricScores.filter(function (x) { return x.testId === t.id; });
+      var obs = observationLine(as, t.id);
+
       if (r.status === 'not_tested' || r.status === 'pending') {
-        html += '<tr><td><b>' + U.esc(t.name) + '</b></td>' +
-          '<td colspan="5" class="dim"><span class="badge badge-none">Not tested</span> ' +
-          U.esc(r.status === 'pending' ? 'No result recorded.' : P.Engine.reasonLabel(r.reason)) +
-          (r.notes ? ' — ' + U.esc(r.notes) : '') + '</td></tr>';
+        html += '<tr class="rpt-skip"><td><b>' + U.esc(t.name) + '</b></td>' +
+          '<td colspan="4">Not tested — ' +
+          U.esc(r.status === 'pending' ? 'no result recorded' :
+                P.Engine.reasonLabel(r.reason).toLowerCase()) +
+          (r.notes ? '. ' + U.esc(r.notes) : '') + '</td></tr>';
         return;
       }
+
       scores.forEach(function (sc, i) {
-        var absMetric = absoluteFor(t, r);
-        html += '<tr><td>' + (i === 0 ? '<b>' + U.esc(t.name) + '</b>' : '') +
-          '<br><span class="fineprint">' + U.esc(sc.metricLabel) + '</span></td>' +
-          '<td class="num">' + (i === 0 && absMetric ? U.esc(absMetric) : '') + '</td>' +
-          '<td class="num"><b>' + (sc.value === null ? '—' : U.fmt(sc.value, sc.dp, sc.unit)) + '</b></td>' +
-          '<td class="num">' + (sc.status === 'scored'
-            ? (sc.scoreType === 'criterion'
-                ? Math.round(sc.value) + '% of max'
-                : U.ordSup(sc.displayPercentile))
-            : '<span class="fineprint">—</span>') + '</td>' +
-          '<td>' + (sc.status === 'scored' ? U.levelBadge(sc.level)
-            : '<span class="fineprint">' + U.esc(statusText(sc)) + '</span>') + '</td>' +
-          '<td>' + (sc.status === 'scored' ? U.refTag(sc.referenceType) : '') + '</td></tr>';
-      });
-      /* observations that are recorded but not benchmarked */
-      as.observations.filter(function (o) { return o.testId === t.id; }).forEach(function (o) {
-        if (o.role === 'condition') return;
-        html += '<tr><td class="dim" style="padding-left:22px">' + U.esc(o.metricLabel) +
-          ' <span class="badge badge-none">observation</span></td>' +
-          '<td class="num dim">' + U.fmt(o.value, o.dp, o.unit) + '</td>' +
-          '<td colspan="3" class="fineprint">' + U.esc(o.note || 'Recorded for context. Not benchmarked.') + '</td>' +
-          '<td></td></tr>';
+        if (sc.status === 'scored') refsUsed[sc.referenceType] = true;
+        var raw = (i === 0) ? absoluteFor(t, r) : '';
+        var benched = sc.value === null ? '—' : U.fmt(sc.value, sc.dp, sc.unit);
+        if (raw === benched) raw = '';
+        html += '<tr>' +
+          '<td>' + (i === 0 ? '<b>' + U.esc(t.name) + '</b>' : '') +
+          (scores.length > 1 ? '<small>' + U.esc(sc.metricLabel) + '</small>' : '') +
+          (i === 0 && obs ? '<small class="rpt-obs">' + obs + '</small>' : '') + '</td>' +
+          '<td class="n dim">' + raw + '</td>' +
+          '<td class="n strong">' + benched + '</td>' +
+          '<td class="n">' + (sc.status === 'scored'
+            ? U.ordSup(sc.displayPercentile) +
+              (sc.referenceType !== 'PGP_PROVISIONAL'
+                ? '<sup class="rpt-refmark">' + (sc.referenceType === 'PUBLISHED' ? 'p' : 'i') + '</sup>'
+                : '')
+            : '<span class="rpt-na">—</span>') + '</td>' +
+          '<td>' + (sc.status === 'scored'
+            ? '<span class="rpt-lv lv' + U.levelIndex(sc.level.name) + '">' + U.esc(sc.level.name) + '</span>'
+            : '<span class="rpt-na">' + U.esc(statusText(sc)) + '</span>') + '</td></tr>';
       });
     });
     html += '</tbody></table></div>';
-    html += '<div class="card-bd"><div class="fineprint">' +
-      '<b>Relative result</b> is the metric that is actually benchmarked — the one that is physiologically ' +
-      'appropriate for the test. Strength is expressed per kilogram of body mass; bike power is expressed per ' +
-      'kilogram; chin-ups are counted in repetitions and compared within a body-mass band rather than divided by ' +
-      'body mass; jumps and throws are absolute distances. Nothing is divided by body mass simply because it can be.' +
-      '</div></div></div></div>';
 
-    /* ---------------- strengths ---------------- */
-    html += '<div class="rpt-sec"><div class="rpt-sec-h">Top physical strengths</div><div class="card"><div class="card-bd">';
-    if (as.profile.strengths.length) {
-      html += '<p class="fineprint" style="margin-bottom:12px">' + U.esc(C.strengthsIntro) + '</p><ol style="margin-left:18px">';
-      as.profile.strengths.forEach(function (s) {
-        html += '<li style="margin-bottom:10px"><b>' + U.esc(s.label) + '</b> — ' + U.ord(s.percentile) +
-          ' percentile <span style="margin-left:6px">' + U.levelBadge({ name: s.level }) + '</span>' +
-          '<div class="fineprint">' + U.esc(s.category) + ' · ' + U.esc(s.why) + '</div></li>';
-      });
-      html += '</ol>';
-    } else {
-      html += '<p class="fineprint">' + U.esc(C.noStrengths) + '</p>';
+    html += '<p class="rpt-note"><b>Benchmarked</b> is the figure actually compared against the reference ' +
+      'population — the one that is physiologically appropriate for the test. Strength and bike power are ' +
+      'expressed per kilogram of body mass; chin-ups are counted in repetitions and compared within a body-mass ' +
+      'band rather than divided by body mass; jumps are absolute distances. Nothing is divided by body mass ' +
+      'simply because it can be.' +
+      (refsUsed.PGP_PROVISIONAL
+        ? ' Every percentile above comes from a <b>PGP provisional standard</b> unless marked ' +
+          '<sup class="rpt-refmark">p</sup> (published) or <sup class="rpt-refmark">i</sup> (PGP internal database).'
+        : '') + '</p>';
+    html += '</section>';
+
+    /* ---------------- what changed ---------------- */
+    if (cmp && P.App.ctx.compare) html += retestSection(cmp, as);
+    else if (cmp) {
+      html += '<div class="no-print" style="margin-bottom:22px">' + U.notice('info',
+        '<b>This athlete was tested before, on ' + U.date(cmp.previousDate) + '.</b> ' +
+        'Use <b>Show what changed</b> at the top to put the comparison in this report.') + '</div>';
     }
-    html += '</div></div></div>';
 
-    /* ---------------- priorities ---------------- */
-    html += '<div class="rpt-sec"><div class="rpt-sec-h">Development priorities</div><div class="card"><div class="card-bd">';
-    if (as.profile.priorities.length) {
-      html += '<p class="fineprint" style="margin-bottom:12px">' + U.esc(C.prioritiesIntro) + '</p><ol style="margin-left:18px">';
-      as.profile.priorities.forEach(function (s) {
-        html += '<li style="margin-bottom:10px"><b>' + U.esc(s.label) + '</b> — ' + U.ord(s.percentile) +
-          ' percentile <span style="margin-left:6px">' + U.levelBadge({ name: s.level }) + '</span>' +
-          '<div class="fineprint">' + U.esc(s.category) + ' · ' + U.esc(s.why) + '</div></li>';
-      });
-      html += '</ol>';
-    } else {
-      html += '<p class="fineprint">' + U.esc(C.noPriorities) + '</p>';
-    }
-    html += '<details class="disc" style="margin-top:14px"><summary>How these were selected</summary>' +
-      '<div class="disc-bd">' + U.esc(as.profile.selectionRule) + '</div></details>';
-    html += '</div></div></div>';
-
-    /* ---------------- recommendations ---------------- */
-    html += '<div class="rpt-sec"><div class="rpt-sec-h">Training recommendations</div><div class="card"><div class="card-bd">';
+    /* ---------------- what to train ---------------- */
+    html += '<section class="rpt-sec"><h2 class="rpt-h">What to train</h2>';
     as.recommendations.cross.forEach(function (c) {
-      html += U.notice('gold', U.esc(c.text));
+      html += '<p class="rpt-flag">' + U.esc(c.text) + '</p>';
     });
-    var byTier = as.recommendations.byCategory.filter(function (r) { return r.tier !== 'high'; })
+    var ordered = as.recommendations.byCategory.filter(function (r) { return r.tier !== 'high'; })
       .concat(as.recommendations.byCategory.filter(function (r) { return r.tier === 'high'; }));
-    byTier.forEach(function (r) {
-      html += '<div style="margin-top:14px"><div class="stat-lbl">' + U.esc(r.categoryName) + ' — ' +
-        U.ord(r.percentile) + ' percentile · ' + U.esc(r.level || '') + '</div><ul style="margin:6px 0 0 18px">' +
-        r.items.map(function (i) { return '<li style="margin-bottom:4px">' + U.esc(i) + '</li>'; }).join('') +
-        '</ul></div>';
+    ordered.forEach(function (r) {
+      html += '<div class="rpt-rec"><div class="rpt-rec-h">' + U.esc(r.categoryName) +
+        '<span>' + U.ord(r.percentile) + ' · ' + U.esc(r.level || '') + '</span></div>' +
+        '<ul>' + r.items.map(function (i) { return '<li>' + U.esc(i) + '</li>'; }).join('') + '</ul></div>';
     });
-    html += '<div class="fineprint" style="margin-top:16px">' + U.esc(as.recommendations.disclaimer) + '</div>';
-    html += '</div></div></div>';
+    html += '<p class="rpt-note">' + U.esc(as.recommendations.disclaimer) + '</p></section>';
 
     /* ---------------- retest targets ---------------- */
-    html += '<div class="rpt-sec"><div class="rpt-sec-h">Retest targets</div><div class="card">' +
-      '<div class="card-hd"><span class="card-ttl">Suggested targets for the next assessment</span>' +
-      '<span class="card-note no-print">editable</span></div>' +
-      '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Test</th><th class="num">Current</th>' +
-      '<th class="num">Target</th><th class="num">Change</th><th>Basis</th></tr></thead><tbody>';
+    html += '<section class="rpt-sec"><h2 class="rpt-h">Targets for the next test</h2>' +
+      '<div class="rpt-scroll"><table class="rpt-tbl"><thead><tr><th>Test</th><th class="n">Now</th>' +
+      '<th class="n">Target</th><th class="n">Change</th></tr></thead><tbody>';
     targets.targets.forEach(function (t) {
       var key = t.testId + '.' + t.metricKey;
       var val = saved[key] !== undefined ? saved[key] : t.target;
       var change = (val === null || val === undefined) ? null : val - t.current;
       html += '<tr><td>' + U.esc(t.label) + '</td>' +
-        '<td class="num">' + U.fmt(t.current, t.dp, t.unit) + '</td>' +
-        '<td class="num"><input type="number" step="any" class="no-print" data-target="' + U.esc(key) +
-        '" value="' + (val === null || val === undefined ? '' : U.fmt(val, t.dp)) +
-        '" style="width:94px;text-align:right;padding:5px 8px">' +
+        '<td class="n">' + U.fmt(t.current, t.dp, t.unit) + '</td>' +
+        '<td class="n strong"><input type="number" step="any" class="no-print rpt-target" data-target="' +
+        U.esc(key) + '" value="' + (val === null || val === undefined ? '' : U.fmt(val, t.dp)) + '">' +
         '<span class="print-only">' + U.fmt(val, t.dp, t.unit) + '</span></td>' +
-        '<td class="num">' + (change === null ? '—' : U.fmtSigned(change, t.dp) + ' ' + (t.unit || '')) + '</td>' +
-        '<td class="fineprint">' + U.esc(t.basis) + '</td></tr>';
+        '<td class="n dim">' + (change === null ? '—' : U.fmtSigned(change, t.dp) + ' ' + (t.unit || '')) +
+        '</td></tr>';
     });
-    html += '</tbody></table></div><div class="card-bd"><div class="fineprint">' + U.esc(targets.note) +
-      ' Suggested retest interval: ' + targets.weeks + ' weeks.</div></div></div></div>';
+    html += '</tbody></table></div><p class="rpt-note">' + U.esc(targets.note) +
+      ' Suggested interval: ' + targets.weeks + ' weeks.</p></section>';
 
-    /* ---------------- retest comparison ---------------- */
-    if (cmp && P.App.ctx.compare) {
-      html += retestSection(cmp, as);
-    } else if (cmp) {
-      html += '<div class="rpt-sec no-print">' + U.notice('info',
-        '<b>This athlete has an earlier session (' + U.date(cmp.previousDate) + ').</b> ' +
-        'Use the <b>Show retest comparison</b> button at the top to include the change analysis in this report.') +
-      '</div>';
-    }
+    /* ---------------- the small print, all in one place ---------------- */
+    html += '<section class="rpt-sec rpt-break rpt-back"><h2 class="rpt-h">How this report was produced</h2>';
 
-    /* ---------------- data quality ---------------- */
-    html += '<div class="rpt-sec"><div class="rpt-sec-h">Data quality and protocol notes</div>' +
-      '<div class="card"><div class="card-bd">';
-    var byTierIss = { error: [], verify: [], info: [] };
-    as.issues.forEach(function (i) { byTierIss[i.severity].push(i); });
-    if (!as.issues.length) {
-      html += '<p class="fineprint">No data-quality issues were raised on this session.</p>';
-    } else {
-      ['error', 'verify', 'info'].forEach(function (sev) {
-        if (!byTierIss[sev].length) return;
-        var title = sev === 'error' ? 'Requires correction' :
-                    sev === 'verify' ? 'Please verify' : 'For the record';
-        html += '<div class="stat-lbl" style="margin-top:12px">' + title + ' (' + byTierIss[sev].length + ')</div>' +
-          '<ul style="margin:6px 0 0 18px" class="fineprint">' +
-          byTierIss[sev].map(function (i) {
-            var t = P.Tests.get(i.scope);
-            return '<li style="margin-bottom:5px"><b>' + U.esc(t ? t.shortName : 'Session') + ':</b> ' +
-              U.esc(i.message) + '</li>';
-          }).join('') + '</ul>';
-      });
+    html += '<div class="rpt-two">';
+    html += '<div><h3 class="rpt-h3">Session</h3><dl class="rpt-dl">' +
+      dd('Tested at', venue ? venue.name : '—') + dd('Their gym', gym ? gym.name : '—') +
+      dd('Coach', session.coach) + dd('Tester', session.tester) +
+      dd('Protocol', session.protocolVersion) +
+      dd('Protocol confirmed', session.protocolConfirmed ? 'Yes' : 'NO — treat as non-standardised') +
+      '</dl></div>';
+    html += '<div><h3 class="rpt-h3">Equipment</h3><dl class="rpt-dl">' +
+      dd('Jump device', U.label(P.Settings.EQUIPMENT.jumpDevice, session.equipment.jumpDevice)) +
+      dd('Sprint timing', U.label(P.Settings.EQUIPMENT.timingDevice, session.equipment.timingDevice) +
+         ' (' + session.equipment.timingMethod + ')') +
+      dd('Air bike', U.label(P.Settings.EQUIPMENT.airBike, session.equipment.airBike)) +
+      dd('Bike seat', session.equipment.seatPosition) +
+      dd('Trap bar', U.label(P.Settings.EQUIPMENT.trapBar, session.equipment.trapBar) +
+         (session.equipment.trapBarMassKg ? ' (' + session.equipment.trapBarMassKg + ' kg)' : '')) +
+      '</dl></div>';
+    html += '</div>';
+
+    html += '<h3 class="rpt-h3">How the numbers were worked out</h3>' +
+      '<p class="rpt-note">Each test result is compared against a reference set matched on the test, the protocol ' +
+      'conditions, sex, age and — where the metric needs it — body-mass band, and turned into a percentile. ' +
+      'A category score is the weighted mean of its contributing test z-scores converted back to a percentile: ' +
+      'percentiles are not a linear scale, so averaging them directly distorts the result at the extremes. ' +
+      'A test that was not performed is absent from the calculation entirely; it is never entered as a zero and ' +
+      'never lowers a score.</p>' +
+      '<p class="rpt-note">' + U.esc(as.composite.note) + '</p>';
+
+    if (as.usesProvisional) {
+      html += '<h3 class="rpt-h3">About the standards used</h3>' +
+        '<p class="rpt-note rpt-caution">' + U.esc(C.provisionalNotice) + '</p>';
     }
-    /* references used */
-    html += '<div class="stat-lbl" style="margin-top:16px">Reference sets used</div><dl class="kv">';
-    Object.keys(as.referenceTypesUsed).forEach(function (k) {
-      html += '<dt>' + U.refTag(k) + '</dt><dd>' + as.referenceTypesUsed[k] + ' metric' +
-        (as.referenceTypesUsed[k] === 1 ? '' : 's') + '</dd>';
-    });
-    html += '</dl>';
     var internalNote = as.metricScores.filter(function (m) {
       return m.internal && m.internal.available;
     })[0];
     if (internalNote) {
-      html += '<div class="fineprint" style="margin-top:10px">' +
-        U.esc(internalNote.internal.benchmark.notes) +
-        (internalNote.internal.isPrimary ? '' : ' This sample is not yet large enough to become the primary ' +
-        'reference, so PGP provisional standards were used instead.') + '</div>';
+      html += '<p class="rpt-note">' + U.esc(internalNote.internal.benchmark.notes) +
+        (internalNote.internal.isPrimary ? ''
+          : ' That sample is not yet large enough to become the primary reference, so PGP provisional standards ' +
+            'were used for this report.') + '</p>';
     }
-    html += '<div class="stat-lbl" style="margin-top:16px">Equipment used</div><dl class="kv">' +
-      kv('Jump device', U.label(P.Settings.EQUIPMENT.jumpDevice, session.equipment.jumpDevice)) +
-      kv('Timing', U.label(P.Settings.EQUIPMENT.timingDevice, session.equipment.timingDevice) + ' (' +
-        U.esc(session.equipment.timingMethod) + ')') +
-      kv('Air bike', U.label(P.Settings.EQUIPMENT.airBike, session.equipment.airBike)) +
-      kv('Trap bar', U.label(P.Settings.EQUIPMENT.trapBar, session.equipment.trapBar) +
-        (session.equipment.trapBarMassKg ? ' (' + session.equipment.trapBarMassKg + ' kg)' : '')) +
-      kv('Bench', U.label(P.Settings.EQUIPMENT.bench, session.equipment.bench)) +
-      kv('Chin-up bar', U.label(P.Settings.EQUIPMENT.pullUpBar, session.equipment.pullUpBar)) +
-      kv('Bike seat position', session.equipment.seatPosition) +
-      '</dl>';
-    if (session.notes) html += '<div class="fineprint" style="margin-top:12px"><b>Session notes:</b> ' +
-      U.esc(session.notes) + '</div>';
-    if (session.injuryNotes) html += '<div class="fineprint" style="margin-top:6px"><b>Injury / availability:</b> ' +
-      U.esc(session.injuryNotes) + '</div>';
-    html += '</div></div></div>';
 
-    /* ---------------- footer ---------------- */
-    html += '<div class="rpt-foot"><b>' + U.esc(set.branding.product) + '</b> · Protocol ' +
-      U.esc(session.protocolVersion) + ' · Report generated ' + U.date(P.Model.today()) + '<br><br>' +
-      U.esc(C.disclaimer) + '</div>';
+    var flags = as.issues.filter(function (i) { return i.severity !== 'info'; });
+    if (flags.length) {
+      html += '<h3 class="rpt-h3">Data quality</h3><ul class="rpt-flags">' +
+        flags.map(function (i) {
+          var t = P.Tests.get(i.scope);
+          return '<li><b>' + U.esc(t ? t.shortName : 'Session') + ':</b> ' + U.esc(i.message) + '</li>';
+        }).join('') + '</ul>';
+    }
+    if (session.notes || session.injuryNotes) {
+      html += '<h3 class="rpt-h3">Notes</h3>' +
+        (session.notes ? '<p class="rpt-note">' + U.esc(session.notes) + '</p>' : '') +
+        (session.injuryNotes ? '<p class="rpt-note"><b>Injury / availability:</b> ' +
+          U.esc(session.injuryNotes) + '</p>' : '');
+    }
+    if (as.observations.some(function (o) { return o.metricKey === 'asymmetry_pct'; })) {
+      html += '<p class="rpt-note">' + U.esc(set.asymmetry.disclaimer) + '</p>';
+    }
+    html += '</section>';
 
-    html += '</div>';   /* .rpt */
+    html += '<footer class="rpt-foot"><b>' + U.esc(set.branding.product) + '</b> · ' +
+      U.esc(set.branding.company) + ' · Protocol ' + U.esc(session.protocolVersion) +
+      ' · Generated ' + U.date(P.Model.today()) + '<br><br>' + U.esc(C.disclaimer) + '</footer>';
 
+    html += '</div>';
     mount.innerHTML = html;
 
     /* charts */
@@ -384,7 +371,6 @@
       });
     }
     P.Charts.radar(U.$('#rpRadar', mount), { series: series, ariaLabel: 'Category percentile profile' });
-    P.Charts.categoryBars(U.$('#rpBars', mount), as.categoryScores);
     if (U.$('#rpChange', mount)) P.Charts.changeBars(U.$('#rpChange', mount), cmp.metrics);
 
     /* wiring */
@@ -407,75 +393,87 @@
         if (v === null) delete S.db.retestTargets[session.id][n.dataset.target];
         else S.db.retestTargets[session.id][n.dataset.target] = v;
         S.saveNow();
-        P.App.saveState(true);
+        P.App.saveState();
         U.toast('Target saved');
         P.App.render();
       });
     });
   }
 
+  /* Secondary measurements for a test, folded into one muted line under its
+     name instead of a row each. */
+  function observationLine(as, testId) {
+    var obs = as.observations.filter(function (o) {
+      return o.testId === testId && o.role !== 'condition' && o.role !== 'sample';
+    });
+    if (!obs.length) return '';
+    return obs.map(function (o) {
+      return U.esc(o.metricLabel) + ' ' + U.fmt(o.value, o.dp, o.unit);
+    }).join(' · ');
+  }
+
+  function dd(k, v) {
+    return '<dt>' + U.esc(k) + '</dt><dd>' +
+      (v === null || v === undefined || v === '' ? '—' : U.esc(String(v))) + '</dd>';
+  }
+
   /* ====================== RETEST SECTION ====================== */
   function retestSection(cmp, as) {
-    var html = '<div class="rpt-sec rpt-break"><div class="rpt-sec-h">Did the athlete improve?</div>';
+    var html = '<section class="rpt-sec rpt-break"><h2 class="rpt-h">What changed since ' +
+      U.date(cmp.previousDate) + '</h2>';
 
     if (!cmp.comparable) {
-      html += U.notice('critical', cmp.warnings.map(U.esc).join('<br>'));
+      html += '<p class="rpt-flag">' + cmp.warnings.map(U.esc).join(' ') + '</p>';
     }
-    html += '<div class="grid g4" style="margin-bottom:14px">' +
-      tile('Previous test', U.date(cmp.previousDate), cmp.weeksBetween + ' weeks before') +
-      tile('Improved', cmp.improved, 'beyond measurement error') +
-      tile('Within variation', cmp.withinNoise, 'change not distinguishable from noise') +
-      tile('Declined', cmp.declined, 'beyond measurement error') +
+
+    html += '<div class="rpt-tally">' +
+      '<div><span class="rpt-tally-n">' + cmp.improved + '</span><span>improved</span>' +
+      '<small>beyond measurement error</small></div>' +
+      '<div><span class="rpt-tally-n">' + cmp.withinNoise + '</span><span>unchanged</span>' +
+      '<small>within measurement variation</small></div>' +
+      '<div><span class="rpt-tally-n">' + cmp.declined + '</span><span>declined</span>' +
+      '<small>beyond measurement error</small></div>' +
+      '<div><span class="rpt-tally-n">' + cmp.weeksBetween + '</span><span>weeks</span>' +
+      '<small>between tests</small></div>' +
       '</div>';
 
-    html += '<div class="card"><div class="card-hd"><span class="card-ttl">Change by metric</span>' +
-      '<span class="card-note">signed so that improvement always points right</span></div>' +
-      '<div class="card-bd"><div id="rpChange"></div></div></div>';
+    var moved = cmp.categories.filter(function (c) { return c.levelChanged; });
+    if (moved.length) {
+      html += '<div class="rpt-moves">' + moved.map(function (c) {
+        return '<div><b>' + U.esc(c.categoryName) + '</b>' +
+          '<span class="rpt-lv lv' + U.levelIndex(c.previousLevel) + ' ghost">' +
+          U.esc(c.previousLevel || '—') + '</span>' +
+          '<span class="rpt-arrow">→</span>' +
+          '<span class="rpt-lv lv' + U.levelIndex(c.currentLevel) + '">' +
+          U.esc(c.currentLevel) + '</span></div>';
+      }).join('') + '</div>';
+    }
 
-    html += '<div class="card" style="margin-top:16px"><div class="tbl-wrap"><table class="tbl"><thead><tr>' +
-      '<th>Test</th><th class="num">Previous</th><th class="num">Current</th><th class="num">Change</th>' +
-      '<th class="num">%</th><th>Verdict</th><th>Level</th></tr></thead><tbody>';
+    html += '<div id="rpChange" class="no-print"></div>';
+
+    html += '<div class="rpt-scroll"><table class="rpt-tbl"><thead><tr><th>Test</th><th class="n">Before</th>' +
+      '<th class="n">Now</th><th class="n">Change</th><th>Verdict</th></tr></thead><tbody>';
     cmp.metrics.forEach(function (r) {
       if (r.previous === null && r.current === null) return;
       var glyph = r.verdict === 'improved' ? '▲' : r.verdict === 'declined' ? '▼' :
                   r.verdict === 'within-noise' ? '=' : '?';
-      var badge = r.verdict === 'improved' ? 'badge-good' : r.verdict === 'declined' ? 'badge-critical' : 'badge-none';
-      var verdictTxt = r.verdict === 'within-noise' ? 'within measurement variation'
-                     : r.verdict === 'unknown' ? 'cannot be judged' : r.verdict;
-      html += '<tr><td>' + U.esc(r.testName) + '<br><span class="fineprint">' + U.esc(r.metricLabel) + '</span></td>' +
-        '<td class="num">' + U.fmt(r.previous, r.dp) + '</td>' +
-        '<td class="num"><b>' + U.fmt(r.current, r.dp) + '</b></td>' +
-        '<td class="num">' + (r.change === null ? '—' : U.fmtSigned(r.change, r.dp)) + '</td>' +
-        '<td class="num">' + (r.changePct === null ? '—' : U.fmtSigned(r.changePct, 1) + '%') + '</td>' +
-        '<td><span class="badge ' + badge + '">' + glyph + ' ' + U.esc(verdictTxt) + '</span>' +
-        (r.meaningful && r.meaningful.provisional
-          ? '<br><span class="fineprint">provisional threshold</span>' : '') +
-        (r.equipmentChanged ? '<br><span class="fineprint" style="color:#f5c353">equipment changed</span>' : '') +
+      var cls = r.verdict === 'improved' ? 'up' : r.verdict === 'declined' ? 'down' : 'flat';
+      var word = r.verdict === 'within-noise' ? 'within measurement variation'
+               : r.verdict === 'unknown' ? 'cannot be judged' : r.verdict;
+      html += '<tr><td><b>' + U.esc(r.testName) + '</b>' +
+        '<small>' + U.esc(r.metricLabel) + (r.unit ? ' (' + U.esc(r.unit) + ')' : '') + '</small>' +
+        (r.equipmentChanged ? '<small class="rpt-caution">equipment changed — not interpretable as adaptation</small>' : '') +
         '</td>' +
-        '<td>' + (r.levelChanged
-          ? '<span class="fineprint">' + U.esc(r.previousLevel || '—') + ' →</span><br>' +
-            U.levelBadge({ name: r.currentLevel })
-          : (r.currentLevel ? '<span class="fineprint">' + U.esc(r.currentLevel) + '</span>' : '—')) +
-        '</td></tr>';
+        '<td class="n dim">' + U.fmt(r.previous, r.dp) + '</td>' +
+        '<td class="n strong">' + U.fmt(r.current, r.dp) + '</td>' +
+        '<td class="n">' + (r.change === null ? '—'
+          : U.fmtSigned(r.change, r.dp) + '<small>' + U.fmtSigned(r.changePct, 1) + '%</small>') + '</td>' +
+        '<td><span class="rpt-verdict ' + cls + '">' + glyph + ' ' + U.esc(word) + '</span>' +
+        (r.levelChanged ? '<small>' + U.esc(r.previousLevel || '—') + ' → ' +
+          U.esc(r.currentLevel) + '</small>' : '') + '</td></tr>';
     });
-    html += '</tbody></table></div></div>';
-
-    /* category level transitions */
-    var moved = cmp.categories.filter(function (c) { return c.levelChanged; });
-    if (moved.length) {
-      html += '<div class="card" style="margin-top:16px"><div class="card-hd">' +
-        '<span class="card-ttl">Categories that moved performance level</span></div><div class="card-bd">';
-      moved.forEach(function (c) {
-        html += '<div style="padding:7px 0"><b>' + U.esc(c.categoryName) + '</b> — ' +
-          U.esc(c.previousLevel || '—') + ' → ' + U.levelBadge({ name: c.currentLevel }) +
-          ' <span class="fineprint">(' + U.ord(c.previous) + ' → ' + U.ord(c.current) + ' percentile)</span></div>';
-      });
-      html += '</div></div>';
-    }
-
-    html += '<div class="card" style="margin-top:16px"><div class="card-bd"><div class="fineprint">' +
-      U.esc(cmp.caveat) + '</div></div></div>';
-    html += '</div>';
+    html += '</tbody></table></div>';
+    html += '<p class="rpt-note">' + U.esc(cmp.caveat) + '</p></section>';
     return html;
   }
 
@@ -483,8 +481,10 @@
   function absoluteFor(t, r) {
     var map = {
       trapbar: ['load_kg', 'reps'], bench: ['load_kg', 'reps'],
-      weighted_chinup: ['added_kg'], bike_12min: ['mean_watts', 'distance_km'],
-      bike_30s: ['peak_watts', 'mean_watts'], bike_repeated: ['best_peak_watts', 'mean_peak_watts'],
+      weighted_chinup: ['added_kg'], bike_12min: ['distance_km'],
+      /* bike_30s and bike_repeated are left out on purpose: their numbers are
+         already on the observation line under the test name, and repeating
+         them in the Recorded column read as an equation. */
       cmj: ['height_cm'], broad_jump: ['distance_m'], sl_broad_jump: ['best_m'],
       sprint_10m: ['time_10m_s'], chinup: ['reps']
     };
@@ -495,7 +495,9 @@
       if (v === null || v === undefined || !m) return null;
       return U.fmt(v, m.dp, m.unit);
     }).filter(Boolean);
-    return out.join(' × ');
+    /* "150 kg x 3 reps" is one quantity; "1252 W x 999 W" is not. */
+    var isLift = (t.id === 'trapbar' || t.id === 'bench');
+    return out.join(isLift ? ' × ' : ' · ');
   }
 
   function statusText(sc) {

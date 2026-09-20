@@ -62,25 +62,132 @@
   .notice-info     { background: #f1f6fd !important; border-color: #a8c3e4 !important; }
   .notice-gold     { background: #fbf8ef !important; border-color: #d6c795 !important; }
 
-  /* ---- report structure ---- */
-  .rpt { display: block !important; }
-  .rpt-cover { border-bottom: 2pt solid #c9a84c; padding-bottom: 8pt; margin-bottom: 12pt; }
-  .rpt-brand { font-size: 8pt; font-weight: 700; letter-spacing: .18em; color: #8a6f2c !important; text-transform: uppercase; }
-  .rpt-title { font-size: 17pt; font-weight: 800; letter-spacing: -.01em; margin: 2pt 0 1pt; color: #111 !important; }
-  .rpt-athlete { font-size: 13pt; font-weight: 700; color: #111 !important; }
-  .rpt-sec { break-inside: avoid; page-break-inside: avoid; margin-bottom: 11pt; }
-  .rpt-sec-h {
-    font-size: 8.5pt; font-weight: 800; letter-spacing: .15em; text-transform: uppercase;
-    color: #8a6f2c !important; border-bottom: .8pt solid #c9a84c;
-    padding-bottom: 3pt; margin-bottom: 7pt;
+  /* ======================================================================
+     THE REPORT ON PAPER
+     A4, ~10pt body. The screen version is dark and made of panels; on paper
+     the panels go and the structure is carried by rules, weight and space,
+     which is what a document sent to an athlete or a gym should look like.
+     ====================================================================== */
+  .rpt { max-width: none !important; }
+  .rpt .card, .rpt .stat, .rpt details.disc { border: 0 !important; background: none !important; padding: 0 !important; }
+
+  /* masthead */
+  .rpt-head { border-bottom: 1.5pt solid #c9a84c !important; padding-bottom: 8pt; margin-bottom: 11pt; }
+  .rpt-mast { display: flex; align-items: center; gap: 6pt; margin-bottom: 7pt; }
+  .rpt-mark {
+    font-size: 7.5pt !important; font-weight: 800; letter-spacing: .06em;
+    color: #fff !important; background: #0b0d12 !important;
+    padding: 2pt 4pt; border-radius: 2pt;
+  }
+  .rpt-brandline { font-size: 7pt !important; letter-spacing: .2em; color: #8a6f2c !important; flex: 1; }
+  .rpt-proto { font-size: 7pt !important; color: #6a7080 !important; }
+  .rpt-name { font-size: 22pt !important; font-weight: 800; letter-spacing: -.02em; color: #111 !important; }
+  .rpt-meta { font-size: 8.5pt !important; color: #4a4f5a !important; margin-top: 4pt; }
+  .rpt-sep { padding: 0 4pt; color: #a8adb8 !important; }
+
+  /* headline finding */
+  .rpt-headline {
+    border: .8pt solid #c9ccd4 !important; background: #fbf9f4 !important;
+    border-radius: 3pt; gap: 0; margin-bottom: 13pt;
+  }
+  .rpt-headline > div { background: none !important; padding: 8pt 11pt; }
+  .rpt-headline > div + div { border-left: .8pt solid #e2e5ea; }
+  .rpt-hl-k { font-size: 7pt !important; color: #6a7080 !important; }
+  .rpt-hl-v { font-size: 11pt !important; color: #111 !important; }
+  .rpt-hl-n { font-size: 14pt !important; color: #8a6f2c !important; }
+
+  /* sections */
+  .rpt-sec { margin-bottom: 14pt; break-inside: auto; }
+  .rpt-h {
+    font-size: 8pt !important; letter-spacing: .17em; color: #8a6f2c !important;
+    border-bottom: .8pt solid #d9cba0 !important; padding-bottom: 3pt; margin-bottom: 8pt;
+    break-after: avoid;
+  }
+  .rpt-h3 { font-size: 7.5pt !important; color: #4a4f5a !important; margin: 9pt 0 3pt; break-after: avoid; }
+  .rpt-two { gap: 16pt; }
+  .rpt-note { font-size: 7.5pt !important; line-height: 1.5; color: #5a6070 !important; margin-top: 6pt; }
+  .rpt-note b { color: #111 !important; }
+  .rpt-caution { color: #8a6000 !important; }
+  .rpt-na { color: #8a8f99 !important; }
+  .rpt-flag {
+    font-size: 8.5pt !important; padding: 6pt 9pt; margin-bottom: 7pt;
+    border-left: 2pt solid #c9a84c !important; background: #fbf8ef !important;
   }
   .rpt-break { break-before: page; page-break-before: always; }
-  .rpt-foot {
-    border-top: .8pt solid #c9ccd4; margin-top: 10pt; padding-top: 6pt;
-    font-size: 7.5pt; line-height: 1.45; color: #4a4f5a !important;
+
+  /* profile */
+  .rpt-profile { grid-template-columns: 1fr 1.15fr; gap: 14pt; break-inside: avoid; }
+  .rpt-cat { padding: 4pt 0; border-bottom: .5pt solid #e8eaee !important; gap: 8pt; break-inside: avoid; }
+  .rpt-cat-name { font-size: 8.5pt !important; color: #111 !important; }
+  .rpt-cat-name small { font-size: 6.5pt !important; color: #6a7080 !important; }
+  .rpt-cat-track { height: 6pt; background: #e6e8ec !important; }
+  .rpt-cat-tick { background: #c2c6ce !important; }
+  .rpt-cat-num { font-size: 12pt !important; color: #111 !important; }
+  .rpt-cat-num sup { font-size: 6.5pt !important; color: #6a7080 !important; }
+  .rpt-cat-fill.lv1 { background: #b8651f !important; } .rpt-cat-fill.lv2 { background: #c98500 !important; }
+  .rpt-cat-fill.lv3 { background: #d4ac3c !important; } .rpt-cat-fill.lv4 { background: #e0c77e !important; }
+  .rpt-lv {
+    font-size: 6.5pt !important; padding: 1.5pt 4pt; border-width: .7pt !important;
+    border-color: currentColor !important; background: none !important;
   }
-  .grid { gap: 8pt !important; }
-  h1, h2, h3, h4, .rpt-sec-h, .card-hd { break-after: avoid; page-break-after: avoid; }
+  .rpt-lv.lv1 { color: #8a4713 !important; } .rpt-lv.lv2 { color: #8a5c00 !important; }
+  .rpt-lv.lv3 { color: #7d6520 !important; } .rpt-lv.lv4 { color: #6e5d2c !important; }
+  .rpt-scale { font-size: 6.5pt !important; color: #6a7080 !important; gap: 9pt; margin-top: 7pt; }
+  .rpt-scale i { width: 6pt; height: 6pt; }
+  .rpt-scale .lv1 i, .rpt-scale span:nth-child(1) i { background: #b8651f !important; }
+  .rpt-scale span:nth-child(2) i { background: #c98500 !important; }
+  .rpt-scale span:nth-child(3) i { background: #d4ac3c !important; }
+  .rpt-scale span:nth-child(4) i { background: #e0c77e !important; }
+  .rpt-scale b { color: #4a4f5a !important; }
+
+  /* strengths and priorities */
+  .rpt-list li { padding: 5pt 0; border-bottom: .5pt solid #e8eaee !important; break-inside: avoid; }
+  .rpt-li-n { font-size: 13pt !important; color: #8a6f2c !important; min-width: 34pt; }
+  .rpt-li-n sup { font-size: 6.5pt !important; color: #6a7080 !important; }
+  .rpt-li-b { font-size: 9pt !important; color: #111 !important; }
+  .rpt-li-b small { font-size: 7pt !important; color: #6a7080 !important; }
+
+  /* tables */
+  table.rpt-tbl { font-size: 8pt !important; }
+  table.rpt-tbl th {
+    font-size: 6.5pt !important; color: #6a7080 !important; padding: 0 5pt 3pt;
+    border-bottom: .8pt solid #b9bdc7 !important;
+  }
+  table.rpt-tbl td { padding: 4pt 5pt; border-bottom: .5pt solid #e8eaee !important; color: #111 !important; }
+  table.rpt-tbl td.dim { color: #6a7080 !important; }
+  table.rpt-tbl td small { font-size: 6.5pt !important; color: #6a7080 !important; }
+  .rpt-skip td { color: #8a8f99 !important; }
+  .rpt-refmark { color: #8a6f2c !important; }
+
+  /* retest */
+  .rpt-tally { border: .8pt solid #c9ccd4 !important; border-radius: 3pt; gap: 0; margin-bottom: 9pt; break-inside: avoid; }
+  .rpt-tally > div { background: none !important; padding: 6pt 8pt; }
+  .rpt-tally > div + div { border-left: .8pt solid #e2e5ea; }
+  .rpt-tally-n { font-size: 17pt !important; color: #111 !important; }
+  .rpt-tally > div > span:nth-child(2) { font-size: 8pt !important; color: #111 !important; }
+  .rpt-tally small { font-size: 6.5pt !important; color: #6a7080 !important; }
+  .rpt-moves > div { font-size: 8.5pt !important; }
+  .rpt-verdict { font-size: 6.5pt !important; }
+  .rpt-verdict.up { color: #0a7a0a !important; }
+  .rpt-verdict.down { color: #a32c2c !important; }
+  .rpt-verdict.flat { color: #6a7080 !important; }
+
+  /* recommendations and back matter */
+  .rpt-rec { margin-bottom: 8pt; break-inside: avoid; }
+  .rpt-rec-h { font-size: 8.5pt !important; color: #111 !important; border-bottom: .5pt solid #e2e5ea !important; }
+  .rpt-rec-h span { font-size: 7pt !important; color: #6a7080 !important; }
+  .rpt-rec li { font-size: 8pt !important; line-height: 1.45; }
+  .rpt-dl { font-size: 7.5pt !important; }
+  .rpt-dl dt { color: #6a7080 !important; }
+  .rpt-dl dd { color: #111 !important; }
+  .rpt-flags li { font-size: 7.5pt !important; color: #5a6070 !important; }
+  .rpt-flags b { color: #111 !important; }
+  .rpt-foot {
+    border-top: .8pt solid #c9ccd4 !important; margin-top: 12pt; padding-top: 6pt;
+    font-size: 6.5pt !important; line-height: 1.45; color: #5a6070 !important;
+  }
+
+  h1, h2, h3, h4, .rpt-h, .rpt-h3, .card-hd { break-after: avoid; page-break-after: avoid; }
   tr, .pbar, .q-item { break-inside: avoid; page-break-inside: avoid; }
   thead { display: table-header-group; }
   a { color: #111 !important; text-decoration: none; }

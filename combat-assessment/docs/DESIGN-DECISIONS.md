@@ -295,6 +295,37 @@ and "send the gym their results" means the results of that gym's athletes,
 wherever they were measured. The gym dashboard and the report filter both key
 on the athlete's own gym for that reason.
 
+## 11f. The report is a document
+
+The report was the screen UI printed: a stack of bordered panels, the same
+level description under every category, a "PGP PROVISIONAL" badge repeated on
+all thirteen rows, and every secondary measurement given its own table row with
+"Recorded for context. Not benchmarked." beside it. That last one more than
+doubled the length of the results table and buried the results inside it.
+
+It is now laid out as a document, with the structure carried by rules, weight
+and space rather than by boxes:
+
+- **Page one is the athlete's page.** Masthead, name, one meta line, then a
+  single sentence of finding — strongest category and the one to develop first
+  — then the profile and the strengths and priorities. That is the page a coach
+  hands over.
+- **Secondary measurements fold into one muted line** under the test name
+  ("Left leg 1.62 m · Right leg 1.69 m · L/R difference 4.1%") instead of a row
+  each. The results table went from about twenty-five rows to eleven.
+- **Things that were repeated are said once.** The reference type is stated at
+  the foot of the table, with a marker only on the rows that differ from it.
+  The methodology, the equipment, the data-quality flags and the disclaimers
+  all moved to a back section instead of interrupting the findings.
+- **The headline summarises categories, not single tests.** It read as a
+  contradiction when a weak individual test sat inside a strong category.
+- Two figures joined by "×" is a load and a rep count, not a peak and a mean,
+  so the bike rows stopped pretending to be an equation.
+
+Print gets its own scale in points, panels off, hairline rules on, and the
+level colours restated as ink that survives greyscale. Tables scroll inside
+their own box on a phone rather than pushing the page sideways.
+
 ## 12. No server, and how the data survives anyway
 
 No backend, no account, no database service: the app works in a basement gym
