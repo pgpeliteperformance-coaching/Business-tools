@@ -260,16 +260,38 @@
   /* ---- csv/json download ---------------------------------------------- */
   U.exportFile = function (kind) {
     var db = P.Store.db, C = P.Csv, stamp = C.stamp();
-    if (kind === 'json') {
-      C.download('pgp-assessment-database-' + stamp + '.json', C.exportJSON(db), 'application/json');
-    } else if (kind === 'sessions') {
-      C.download('pgp-raw-results-' + stamp + '.csv', C.exportSessionsCSV(db), 'text/csv');
-    } else if (kind === 'scores') {
-      C.download('pgp-scores-and-percentiles-' + stamp + '.csv', C.exportScoresCSV(db), 'text/csv');
-    } else if (kind === 'athletes') {
-      C.download('pgp-athlete-roster-' + stamp + '.csv', C.exportAthletesCSV(db), 'text/csv');
-    }
-    U.toast('Export downloaded');
+    var spec = ({
+      json:     ['pgp-assessment-database-' + stamp + '.json', C.exportJSON, 'application/json'],
+      sessions: ['pgp-raw-results-' + stamp + '.csv', C.exportSessionsCSV, 'text/csv'],
+      scores:   ['pgp-scores-and-percentiles-' + stamp + '.csv', C.exportScoresCSV, 'text/csv'],
+      athletes: ['pgp-athlete-roster-' + stamp + '.csv', C.exportAthletesCSV, 'text/csv']
+    })[kind];
+    if (!spec) return;
+    var text = spec[1](db);
+    if (C.download(spec[0], text, spec[2])) { U.toast('Export downloaded'); return; }
+
+    /* The environment refused the download. Say so, and hand over the data
+       rather than leaving a button that appears to do nothing. */
+    U.modal({
+      title: 'Copy this export',
+      bodyHtml: U.notice('warning',
+        '<b>This preview cannot save files.</b> The embedded viewer blocks downloads that a page starts itself. ' +
+        'Select everything below and copy it into a file named <b>' + U.esc(spec[0]) + '</b>. ' +
+        'Running the app from your own copy — open <b>index.html</b> from the folder — downloads normally.') +
+        '<textarea id="expOut" readonly style="margin-top:12px;min-height:220px;font-family:var(--mono);' +
+        'font-size:11px;white-space:pre;overflow-wrap:normal;overflow-x:auto">' + U.esc(text) + '</textarea>',
+      buttons: [
+        { label: 'Select all', onClick: function () {
+          var t = U.$('#expOut');
+          t.focus(); t.select();
+          try { document.execCommand('copy'); U.toast('Copied to the clipboard'); }
+          catch (e) { U.toast('Selected — press Ctrl/Cmd+C to copy'); }
+          return true;
+        } },
+        { label: 'Close', class: 'btn-primary' }
+      ],
+      onOpen: function (body) { var t = U.$('#expOut', body); if (t) { t.focus(); t.select(); } }
+    });
   };
 
   U.pickFile = function (accept, onText) {

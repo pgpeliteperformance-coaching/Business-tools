@@ -1,0 +1,97 @@
+<title>PGP Combat Assessment</title>
+<!--
+  ARTIFACT-HOSTED VARIANT of ../index.html
+  ---------------------------------------------------------------------------
+  Identical application, identical CSS and JavaScript — the only differences
+  are the ones the artifact host requires:
+
+    * no <!DOCTYPE>, <html>, <head> or <body> tags: the host wraps the file
+      in its own skeleton at publish time
+    * PGP_PREVIEW = true, because an embedded viewer blocks downloads that a
+      page starts itself. The app then offers each export as copyable text
+      and says why, instead of a button that appears to do nothing.
+
+  Keep this file in step with ../index.html when the script list changes.
+  For real testing use ../index.html, which downloads and prints normally.
+-->
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/print.css">
+
+<style>
+  /* The host pads :root by the phone's safe-area insets, so the sticky
+     chrome offsets from the inset rather than from zero. */
+  .hdr { top: env(safe-area-inset-top, 0px); }
+  .nav { top: calc(60px + env(safe-area-inset-top, 0px)); }
+  .wizard-nav { bottom: env(safe-area-inset-bottom, 0px); }
+</style>
+
+<script>window.PGP_PREVIEW = true;</script>
+
+<header class="hdr no-print">
+  <div class="hdr-brand">
+    <div class="hdr-mark" aria-hidden="true">PGP</div>
+    <div class="hdr-titles">
+      <div class="hdr-t1">COMBAT ATHLETE PERFORMANCE ASSESSMENT</div>
+      <div class="hdr-t2">Test · Benchmark · Identify · Train · Retest</div>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <div class="hdr-meta">
+      <div id="hdrDate">—</div>
+      <div id="hdrProtocol">—</div>
+    </div>
+    <span class="save-state" id="saveState" title="Data is saved in this browser only">—</span>
+  </div>
+</header>
+
+<nav class="nav no-print" id="nav" aria-label="Main navigation"></nav>
+
+<main id="pgMain">
+  <div id="globalNotice" class="no-print"></div>
+  <section class="pg" id="pg-dashboard"  aria-label="Dashboard"></section>
+  <section class="pg" id="pg-athletes"   aria-label="Athletes"></section>
+  <section class="pg" id="pg-newtest"    aria-label="New test"></section>
+  <section class="pg" id="pg-event"      aria-label="Testing day"></section>
+  <section class="pg" id="pg-database"   aria-label="Database"></section>
+  <section class="pg" id="pg-benchmarks" aria-label="Benchmarks"></section>
+  <section class="pg" id="pg-reports"    aria-label="Reports"></section>
+  <section class="pg" id="pg-protocol"   aria-label="Protocol"></section>
+  <section class="pg" id="pg-settings"   aria-label="Settings"></section>
+</main>
+
+<div class="modal-bg no-print" id="modalBg" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal">
+    <div class="modal-hd">
+      <span class="card-ttl" id="modalTitle">—</span>
+      <button class="btn btn-sm btn-ghost" id="modalClose" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-bd" id="modalBody"></div>
+    <div class="modal-ft" id="modalFoot"></div>
+  </div>
+</div>
+
+<script src="js/core/stats.js"></script>
+<script src="js/core/calc.js"></script>
+<script src="js/config/tests.js"></script>
+<script src="js/config/benchmarks.js"></script>
+<script src="js/config/settings.js"></script>
+<script src="js/config/protocol.js"></script>
+<script src="js/core/validate.js"></script>
+<script src="js/core/model.js"></script>
+<script src="js/core/engine.js"></script>
+<script src="js/data/sample.js"></script>
+<script src="js/core/store.js"></script>
+<script src="js/core/csv.js"></script>
+<script src="js/ui/ui.js"></script>
+<script src="js/ui/charts.js"></script>
+<script src="js/app.js"></script>
+<script src="js/ui/dashboard.js"></script>
+<script src="js/ui/athletes.js"></script>
+<script src="js/ui/newtest.js"></script>
+<script src="js/ui/event.js"></script>
+<script src="js/ui/database.js"></script>
+<script src="js/ui/benchmarks.js"></script>
+<script src="js/ui/reports.js"></script>
+<script src="js/ui/protocolview.js"></script>
+<script src="js/ui/settingsview.js"></script>
+<script src="tests/qc.js"></script>

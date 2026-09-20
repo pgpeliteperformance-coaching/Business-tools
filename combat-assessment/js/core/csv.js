@@ -313,9 +313,18 @@
     return { athletes: added, skipped: skipped };
   };
 
-  /* ---- browser download helper ---------------------------------------- */
+  /* ---- browser download helper ----------------------------------------
+     Returns true when the download was handed to the browser, false when
+     the environment cannot accept one. Some embedded/sandboxed viewers
+     block page-initiated downloads outright; the caller then offers the
+     text for copy-paste instead of appearing to do nothing. */
+  C.downloadsBlocked = function () {
+    return typeof window !== 'undefined' && window.PGP_PREVIEW === true;
+  };
+
   C.download = function (filename, text, mime) {
     if (typeof document === 'undefined') return false;
+    if (C.downloadsBlocked()) return false;
     var blob = new Blob([text], { type: (mime || 'text/plain') + ';charset=utf-8' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
