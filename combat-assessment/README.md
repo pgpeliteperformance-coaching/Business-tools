@@ -125,14 +125,25 @@ criteria and standardisation — is on the **Protocol** page in the app.
 
 ## How to run a testing day
 
-1. **Testing Day → New testing day.** Name it, set the gym and the tester.
-2. **Add athletes to the queue**, or import a roster CSV (`name` is the only
-   required column; `sex` is needed before any percentile can be produced).
-3. Work down the queue. Tap an athlete, work through the eleven steps, and the
-   app autosaves after every keystroke.
-4. Mark anything you could not test as **Not tested** with a reason. Missing
-   data is never scored as zero and never counts against the athlete.
-5. At the end, generate reports and **export a JSON backup before you leave**.
+There is one screen. It opens on it.
+
+1. **Type the gym name** at the top. That is the whole setup — no gym to create,
+   no event to start. Next time it remembers where you were.
+2. **+ Add an athlete.** Name, sex, age, body mass. Start testing.
+3. **Fill in the numbers** on one scrolling page. Every test is there; typing a
+   value marks that test as done. Best-of-three works itself out.
+4. Anything you could not test: hit **Not tested** and pick a reason. It never
+   counts against the athlete and the reason is printed on their report.
+5. **Finish & see report**, then back to the list and on to the next athlete.
+6. **Export a JSON backup before you leave**, unless you are saving to a
+   workbook file, in which case it is already on disk.
+
+Typing a name that has been tested before is recognised as a retest, and their
+sex, age, sport and last body mass are filled in for you.
+
+The four tabs are **Testing**, **Athletes**, **Reports** and **More**. Everything
+else — gym view, database, benchmarks, protocol, settings — lives under More,
+because it is what you use between testing days rather than during one.
 
 The **testing order matters and is part of the protocol version.** It was
 reviewed and changed from the original specification — see Protocol → Design

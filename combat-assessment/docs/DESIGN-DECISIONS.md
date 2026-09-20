@@ -212,6 +212,28 @@ colour-vision-deficiency separation against this surface.
 
 ---
 
+## 11b. One screen, not a workflow
+
+The first build had a New Test wizard *and* a Testing Day mode, and required a
+gym to be created before a testing day, which needed an athlete registered
+before a session, which needed eleven steps clicked through before a number
+could be typed. That is a database schema wearing a user interface. What a
+coach actually does is turn up somewhere, work through a list of people, and
+write numbers down.
+
+So the front door is now one screen. The gym is a text field, not an entity —
+a testing day *is* a gym name and a date, so today's list is derived by asking
+which sessions share them, and there is no event record to keep in step.
+Athletes are created by typing a name; a name already on file is offered as a
+retest with their details filled in. Data entry is a single scrolling page with
+every test on it, and typing a value marks that test as done rather than
+needing its own tap.
+
+Navigation went from nine tabs to four: Testing, Athletes, Reports, More. The
+depth did not go anywhere — gym view, database, benchmarks, protocol and
+settings all still exist, behind More, because they are what a coach uses
+between testing days rather than during one.
+
 ## 12. No server, and how the data survives anyway
 
 No backend, no account, no database service: the app works in a basement gym

@@ -13,14 +13,17 @@
     views: {}   /* registered by each view file: { render(mount) } */
   };
 
+  /* Four tabs. Everything a coach does at a gym is on the first one; the
+     rest of the system lives behind More, which is where you go between
+     testing days rather than during one. */
   var PAGES = [
-    { id: 'dashboard',  label: 'Dashboard' },
-    { id: 'athletes',   label: 'Athletes' },
-    { id: 'newtest',    label: 'New Test' },
-    { id: 'event',      label: 'Testing Day' },
+    { id: 'test',       label: 'Testing',  primary: true },
+    { id: 'athletes',   label: 'Athletes', primary: true },
+    { id: 'reports',    label: 'Reports',  primary: true },
+    { id: 'more',       label: 'More',     primary: true },
+    { id: 'dashboard',  label: 'Gym view' },
     { id: 'database',   label: 'Database' },
     { id: 'benchmarks', label: 'Benchmarks' },
-    { id: 'reports',    label: 'Reports' },
     { id: 'protocol',   label: 'Protocol' },
     { id: 'settings',   label: 'Settings' }
   ];
@@ -29,8 +32,10 @@
   App.go = function (page, ctx) {
     if (ctx) Object.assign(App.ctx, ctx);
     App.page = page;
+    var primary = PAGES.filter(function (p) { return p.id === page; })[0];
+    var highlight = (primary && primary.primary) ? page : 'more';
     U.$$('.nav-tab').forEach(function (t) {
-      if (t.dataset.page === page) t.setAttribute('aria-current', 'page');
+      if (t.dataset.page === highlight) t.setAttribute('aria-current', 'page');
       else t.removeAttribute('aria-current');
     });
     U.$$('.pg').forEach(function (p) { p.classList.toggle('on', p.id === 'pg-' + page); });
@@ -100,7 +105,7 @@
 
     /* nav */
     var nav = U.$('#nav');
-    PAGES.forEach(function (p) {
+    PAGES.filter(function (p) { return p.primary; }).forEach(function (p) {
       nav.appendChild(U.el('button', {
         class: 'nav-tab', dataset: { page: p.id }, type: 'button',
         onclick: function () {
@@ -147,7 +152,8 @@
 
     /* deep link */
     var hash = location.hash.slice(1);
-    App.go(PAGES.some(function (p) { return p.id === hash; }) ? hash : 'dashboard');
+    /* Opens on the testing screen: that is what the app is for. */
+    App.go(PAGES.some(function (p) { return p.id === hash; }) ? hash : 'test');
     window.addEventListener('hashchange', function () {
       var h = location.hash.slice(1);
       if (h && h !== App.page && PAGES.some(function (p) { return p.id === h; })) App.go(h);

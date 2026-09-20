@@ -156,7 +156,7 @@
     U.$$('[data-e]', mount).forEach(function (b) {
       b.addEventListener('click', function () {
         var s = P.Store.session(b.dataset.e);
-        P.App.go('newtest', { sessionId: s.id, athleteId: s.athleteId, step: 0 });
+        P.App.go('test', { sessionId: s.id, athleteId: s.athleteId });
       });
     });
     U.$$('[data-d]', mount).forEach(function (b) {

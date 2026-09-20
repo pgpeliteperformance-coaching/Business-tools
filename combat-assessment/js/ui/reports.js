@@ -375,7 +375,7 @@
     });
     U.$('#rpPrint', mount).addEventListener('click', function () { window.print(); });
     U.$('#rpEdit', mount).addEventListener('click', function () {
-      P.App.go('newtest', { athleteId: session.athleteId, sessionId: session.id, step: 0 });
+      P.App.go('test', { athleteId: session.athleteId, sessionId: session.id });
     });
     var tg = U.$('#rpToggle', mount);
     if (tg) tg.addEventListener('click', function () {

@@ -223,7 +223,21 @@
     });
     U.$('#athEdit', mount).addEventListener('click', function () { athleteForm(a); });
     U.$('#athTest', mount).addEventListener('click', function () {
-      P.App.go('newtest', { athleteId: a.id, sessionId: null, step: 0, wizardSession: null });
+      /* Go straight into entry for this athlete rather than sending the
+         coach to a picker to choose the person they are already looking at. */
+      var T = P.App.views.test, S2 = P.Store;
+      var prev = S2.latestSession(a.id);
+      var sess = P.Model.newSession({
+        athleteId: a.id, gymId: a.gymId || T.gymIdFor(T.day.gym), date: T.day.date || P.Model.today(),
+        tester: T.day.tester, coach: a.coach,
+        bodyMassKg: prev ? prev.bodyMassKg : null,
+        heightCm: prev ? prev.heightCm : null,
+        ageAtTest: P.Model.athleteAgeForSession(a, { date: T.day.date || P.Model.today() }),
+        equipment: prev ? JSON.parse(JSON.stringify(prev.equipment)) : undefined
+      });
+      S2.upsertSession(sess);
+      P.App.saveState();
+      P.App.go('test', { sessionId: sess.id, athleteId: a.id });
     });
     var rb = U.$('#athReport', mount);
     if (rb) rb.addEventListener('click', function () {
@@ -250,7 +264,7 @@
     });
     U.$$('[data-edit]', mount).forEach(function (b) {
       b.addEventListener('click', function () {
-        P.App.go('newtest', { athleteId: a.id, sessionId: b.dataset.edit, step: 0, wizardSession: null });
+        P.App.go('test', { athleteId: a.id, sessionId: b.dataset.edit });
       });
     });
 
