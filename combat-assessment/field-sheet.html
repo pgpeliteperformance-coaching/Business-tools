@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PGP Combat Assessment — Field Recording Sheet</title>
+<!--
+  FIELD RECORDING SHEET — one A4 page per athlete.
+  ---------------------------------------------------------------------------
+  This is the pen-and-paper companion to the app. It carries boxes for
+  EXACTLY the values a tester enters by hand, in the order of
+  js/config/protocol.js TESTING_ORDER, with the plausible ranges from
+  js/config/tests.js printed beside each box so an implausible reading is
+  caught while the athlete is still in front of you.
+
+  It deliberately has NO boxes for derived values (average power, estimated
+  1RM, relative strength, loss of watts, asymmetry). Those are calculated —
+  writing them by hand invites arithmetic errors and there is nowhere for
+  them to go when the numbers are typed in.
+
+  Keep in step with js/config/tests.js when the battery changes.
+  Open in a browser and print, or File > Print > Save as PDF.
+-->
+<style>
+  :root {
+    --ink:   #000;
+    --mid:   #555;
+    --light: #888;
+    --rule:  #000;
+    --hair:  #bbb;
+    --box:   #f4f4f4;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { background: #e8e8e8; }
+
+  body {
+    margin: 0;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    font-size: 8.4pt;
+    line-height: 1.2;
+  }
+
+  /* ---- the page ------------------------------------------------------ */
+
+  .sheet {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 6mm 8mm 3.5mm;
+    margin: 12px auto;
+    background: #fff;
+    box-shadow: 0 2px 14px rgba(0,0,0,.25);
+  }
+
+  /* ---- masthead ------------------------------------------------------ */
+
+  .mast {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    border-bottom: 2.5pt solid var(--rule);
+    padding-bottom: 1.8mm;
+    margin-bottom: 2.2mm;
+  }
+  .mast-l { display: flex; align-items: flex-end; gap: 3mm; }
+  .mark {
+    font-size: 15pt;
+    font-weight: 800;
+    letter-spacing: .5pt;
+    line-height: 1;
+  }
+  .mast-t1 {
+    font-size: 10.5pt;
+    font-weight: 700;
+    letter-spacing: .9pt;
+    text-transform: uppercase;
+    line-height: 1.1;
+  }
+  .mast-t2 {
+    font-size: 7pt;
+    letter-spacing: 1.4pt;
+    text-transform: uppercase;
+    color: var(--mid);
+    margin-top: .6mm;
+  }
+  .mast-r {
+    text-align: right;
+    font-size: 6.8pt;
+    letter-spacing: .7pt;
+    text-transform: uppercase;
+    color: var(--mid);
+    line-height: 1.5;
+  }
+
+  /* ---- write-in boxes ------------------------------------------------ */
+
+  /* A box is a bordered cell with a tinted fill, so an empty box reads as
+     "nothing recorded" rather than as an accidental blank. */
+  .bx {
+    border: .6pt solid var(--rule);
+    background: var(--box);
+    height: 6.0mm;
+  }
+  .bx-sm { height: 5.2mm; }
+
+  .lbl {
+    font-size: 6.2pt;
+    letter-spacing: .5pt;
+    text-transform: uppercase;
+    color: var(--mid);
+    margin-bottom: .7mm;
+    line-height: 1.2;
+  }
+  .unit { color: var(--light); }
+
+  /* the plausible range, printed small under a box */
+  .rng {
+    font-size: 5.8pt;
+    color: var(--light);
+    margin-top: .5mm;
+    letter-spacing: .2pt;
+  }
+
+  /* ---- athlete header ------------------------------------------------ */
+
+  .hdr-grid {
+    display: grid;
+    grid-template-columns: 2.4fr .7fr .7fr 1fr 1.3fr 1.6fr;
+    gap: 1.8mm;
+    margin-bottom: 1.8mm;
+  }
+  .hdr-grid2 {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1.4fr 2.6fr;
+    gap: 1.8mm;
+    margin-bottom: 2.2mm;
+  }
+
+  /* ---- a test block -------------------------------------------------- */
+
+  .blk { margin-bottom: 1.05mm; break-inside: avoid; }
+
+  .blk-hd {
+    display: flex;
+    align-items: baseline;
+    gap: 2mm;
+    border-bottom: .8pt solid var(--rule);
+    padding-bottom: .6mm;
+    margin-bottom: 1.1mm;
+  }
+  .blk-n {
+    font-size: 7pt;
+    font-weight: 700;
+    min-width: 4.2mm;
+  }
+  .blk-t {
+    font-size: 8.6pt;
+    font-weight: 700;
+    letter-spacing: .3pt;
+  }
+  .blk-cue {
+    font-size: 6.4pt;
+    color: var(--mid);
+    margin-left: auto;
+    text-align: right;
+    letter-spacing: .2pt;
+    max-width: 92mm;
+  }
+
+  .row { display: grid; gap: 1.8mm; align-items: end; }
+
+  /* attempt columns: 3 tries + a note which attempt counted */
+  .c-att3 { grid-template-columns: repeat(3, 1fr) 2.2fr; }
+  .c-att2 { grid-template-columns: repeat(4, 1fr) 1.6fr; }
+  .c-lift { grid-template-columns: 1.2fr .8fr 2.6fr; }
+  .c-one  { grid-template-columns: 1.1fr 3.4fr; }
+  .c-cmj  { grid-template-columns: repeat(3, 1fr) 1fr 1fr .9fr; }
+  .c-s30  { grid-template-columns: repeat(3, 1fr) 2.2fr; }
+  .c-rep  { grid-template-columns: repeat(6, 1fr) .9fr; }
+  .c-hr   { grid-template-columns: 1.2fr 1.2fr 1.2fr 2.6fr; }
+  .c-proc { grid-template-columns: 1fr 1.3fr 3.4fr; }
+
+  /* the 12 minute boxes */
+  .mins { display: grid; grid-template-columns: repeat(12, 1fr); gap: 1.4mm; }
+  .mins .lbl { text-align: center; }
+
+  /* ---- footer -------------------------------------------------------- */
+
+  .ft {
+    margin-top: 1.5mm;
+    padding-top: 1.2mm;
+    border-top: .8pt solid var(--rule);
+    display: flex;
+    justify-content: space-between;
+    gap: 4mm;
+    font-size: 6.2pt;
+    color: var(--mid);
+    line-height: 1.45;
+  }
+  .ft p { margin: 0; }
+  .ft-note { max-width: 112mm; }
+  .ft-sig { text-align: right; }
+  .sig-line {
+    border-bottom: .6pt solid var(--rule);
+    width: 46mm;
+    height: 6mm;
+    margin-left: auto;
+  }
+
+  .warn {
+    font-size: 6.2pt;
+    color: var(--ink);
+    border: .6pt solid var(--rule);
+    padding: 1.1mm 1.8mm;
+    margin-bottom: 1.8mm;
+    line-height: 1.4;
+  }
+  .warn b { letter-spacing: .3pt; }
+
+  /* ---- screen-only hint ---------------------------------------------- */
+
+  .hint {
+    width: 210mm;
+    margin: 14px auto 0;
+    font-size: 11px;
+    color: #444;
+    line-height: 1.5;
+  }
+
+  /* ---- print --------------------------------------------------------- */
+
+  @page { size: A4; margin: 0; }
+
+  @media print {
+    html { background: #fff; }
+    .sheet {
+      margin: 0;
+      box-shadow: none;
+      width: auto;
+      min-height: 0;
+      page-break-after: always;
+    }
+    .sheet:last-of-type { page-break-after: auto; }
+    .hint { display: none; }
+    /* keep the tinted boxes — they print as a faint grey that shows an
+       empty box is genuinely empty */
+    .bx { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hint">
+  One page per athlete. Print as many as you have fighters, clip them to a
+  board, and type the numbers into the app afterwards. Boxes are only for
+  values you measure — everything else the app calculates.
+</div>
+
+<div class="sheet">
+
+  <div class="mast">
+    <div class="mast-l">
+      <div class="mark">PGP</div>
+      <div>
+        <div class="mast-t1">Combat Athlete Performance Assessment</div>
+        <div class="mast-t2">Field recording sheet &middot; Protocol PGP v1.0</div>
+      </div>
+    </div>
+    <div class="mast-r">
+      <div>Test &middot; Benchmark &middot; Identify</div>
+      <div>Train &middot; Retest</div>
+    </div>
+  </div>
+
+  <!-- ATHLETE ---------------------------------------------------------- -->
+  <div class="hdr-grid">
+    <div><div class="lbl">Athlete name</div><div class="bx"></div></div>
+    <div><div class="lbl">Sex</div><div class="bx"></div></div>
+    <div><div class="lbl">Age</div><div class="bx"></div></div>
+    <div><div class="lbl">Body mass <span class="unit">kg</span></div><div class="bx"></div></div>
+    <div><div class="lbl">Height <span class="unit">cm</span></div><div class="bx"></div></div>
+    <div><div class="lbl">Sport</div><div class="bx"></div></div>
+  </div>
+  <div class="hdr-grid2">
+    <div><div class="lbl">Their gym</div><div class="bx"></div></div>
+    <div><div class="lbl">Date</div><div class="bx"></div></div>
+    <div><div class="lbl">Tester</div><div class="bx"></div></div>
+    <div><div class="lbl">Air bike make / model &mdash; must match at retest</div><div class="bx"></div></div>
+  </div>
+
+  <div class="warn">
+    <b>READINESS &mdash; ask before testing.</b>
+    Slept normally? Eaten? Pain, illness or injury? Hard session or sparring in
+    the last 24&nbsp;h? Cutting weight? If any answer changes how they perform,
+    note it. Leave a test you did not run <b>blank</b> &mdash; never write a zero.
+  </div>
+
+  <!-- SESSION PROCESS -------------------------------------------------- -->
+  <div class="blk">
+    <div class="blk-hd">
+      <div class="blk-n">&mdash;</div>
+      <div class="blk-t">Session process</div>
+      <div class="blk-cue">same warm-up every time, full recovery block, or nothing is comparable</div>
+    </div>
+    <div class="row c-proc">
+      <div><div class="lbl">Warm-up done <span class="unit">tick</span></div><div class="bx bx-sm"></div></div>
+      <div><div class="lbl">Recovery before 12-min <span class="unit">min</span></div><div class="bx bx-sm"></div></div>
+      <div><div class="lbl">Any deviation from the standard protocol</div><div class="bx bx-sm"></div></div>
+    </div>
+  </div>
+
+  <!-- 5. CMJ ----------------------------------------------------------- -->
+  <div class="blk">
+    <div class="blk-hd">
+      <div class="blk-n">1</div>
+      <div class="blk-t">Countermovement jump</div>
+      <div class="blk-cue">3 attempts, 30 s apart &middot; hands on hips &middot; flight/contact times only if you have a mat</div>
+    </div>
+    <div class="row c-cmj">
+      <div><div class="lbl">Jump 1 <span class="unit">cm</span></div><div class="bx"></div></div>
+      <div><div class="lbl">Jump 2 <span class="unit">cm</span></div><div class="bx"></div></div>
+      <div><div class="lbl">Jump 3 <span class="unit">cm</span></div><div class="bx"></div></div>
+      <div>
+        <div class="lbl">Flight time <span class="unit">s</span></div>
+        <div class="bx"></div>
+      </div>
+      <div>
+        <div class="lbl">Contact time <span class="unit">s</span></div>
+        <div class="bx"></div>
+      </div>
+      <div><div class="lbl">Method</div><div class="bx"></div></div>
+    </div>
+    <div class="rng">Expect 10&ndash;90 cm. Record every attempt &mdash; the app takes the best. Method: mat / Vertec / app.</div>
+  </div>
+
+  <!-- 6. BROAD JUMP ---------------------------------------------------- -->
+  <div class="blk">
+    <div class="blk-hd">
+      <div class="blk-n">2</div>
+      <div class="blk-t">Standing broad jump</div>
+      <div class="blk-cue">3 attempts &middot; measure to the <b>rearmost</b> heel &middot; metres</div>
+    </div>
+    <div class="row c-att3">
+      <div><div class="lbl">Jump 1 <span class="unit">m</span></div><div class="bx"></div></div>
+      <div><div class="lbl">Jump 2 <span class="unit">m</span></div><div class="bx"></div></div>
+      <div><div class="lbl">Jump 3 <span class="unit">m</span></div><div class="bx"></div></div>
+      <div><div class="lbl">Notes &mdash; fouls, slips, surface</div><div class="bx"></div></div>
+    </div>
+    <div class="rng">Expect 1.00&ndash;3.30 m, two decimals (e.g. 2.31). A jump they stepped back out of does not count.</div>
+  </div>
+
+  <!-- 7. SL BROAD JUMP ------------------------------------------------- -->
+  <div class="blk">
+    <div class="blk-hd">
+      <div class="blk-n">3</div>
+      <div class="blk-t">Single-leg broad jump</div>
+      <div class="blk-cue">2 attempts per leg &middot; land and <b>stick</b> it &middot; metres</div>
+    </div>
+    <div class="row c-att2">
+      <div><div class="lbl">Left 1 <span class="unit">m</span></div><div class="bx"></div></div>
+      <div><div class="lbl">Left 2 <span class="unit">m</span></div><div class="bx"></div></div>
+      <div><div class="lbl">Right 1 <span class="unit">m</span></div><div class="bx"></div></div>
+      <div><div class="lbl">Right 2 <span class="unit">m</span></div><div class="bx"></div></div>
+      <div><div class="lbl">Notes</div><div class="bx"></div></div>
+    </div>
+    <div class="rng">Expect 0.60&ndash;2.60 m. An unstuck landing is void &mdash; repeat it. The app works out the left/right difference.</div>
+  </div>
+
+  <!-- 8. SPRINT -------------------------------------------------------- -->
+  <div class="blk">
+    <div class="blk-hd">
+      <div class="blk-n">4</div>
+      <div class="blk-t">10 m sprint</div>
+      <div class="blk-cue">3 attempts, 2 min apart &middot; standing start, front foot on the line</div>
+    </div>
+    <div class="row c-att3">
+      <div><div class="lbl">Run 1 <span class="unit">s</span></div><div class="bx"></div></div>
+      <div><div class="lbl">Run 2 <span class="unit">s</span></div><div class="bx"></div></div>
+      <div><div class="lbl">Run 3 <span class="unit">s</span></div><div class="bx"></div></div>
+      <div><div class="lbl">Timing method <span class="unit">gates / hand</span></div><div class="bx"></div></div>
+    </div>
+    <div class="rng">Expect 1.40&ndash;2.80 s. <b>Hand-timed runs are recorded but never benchmarked</b> &mdash; a stopwatch cannot resolve a tenth over 10 m. Longer splits go in the notes.</div>
+  </div>
+
+  <!-- 9. TRAP BAR ------------------------------------------------------ -->
+  <div class="blk">
+    <div class="blk-hd">
+      <div class="blk-n">5</div>
+      <div class="blk-t">Trap-bar deadlift</div>
+      <div class="blk-cue">heaviest clean set &middot; <b>record the bar load and the reps you saw</b></div>
+    </div>
+    <div class="row c-lift">
+      <div><div class="lbl">Load lifted <span class="unit">kg</span></div><div class="bx"></div></div>
+      <div><div class="lbl">Reps</div><div class="bx"></div></div>
+      <div><div class="lbl">Notes &mdash; bar type, handle height, belt, straps</div><div class="bx"></div></div>
+    </div>
+    <div class="rng">Expect 40&ndash;320 kg at 1&ndash;8 reps, bar included. The app estimates the 1RM. Above 8 reps the estimate is unreliable &mdash; go heavier instead.</div>
+  </div>
+
+  <!-- 10. CHIN-UPS ----------------------------------------------------- -->
+  <div class="blk">
+    <div class="blk-hd">
+      <div class="blk-n">6</div>
+      <div class="blk-t">Strict chin-ups, then weighted single</div>
+      <div class="blk-cue">chin over the bar, full hang, no kipping &middot; stop counting at the first swing</div>
+    </div>
+    <div class="row c-lift">
+      <div><div class="lbl">Strict reps</div><div class="bx"></div></div>
+      <div><div class="lbl">Added kg for a <b>single</b></div><div class="bx"></div></div>
+      <div><div class="lbl">Notes &mdash; grip, how it was loaded</div><div class="bx"></div></div>
+    </div>
+    <div class="rng">Expect 0&ndash;40 strict reps; added load 0&ndash;80 kg. The weighted chin-up is a <b>true 1RM single</b> &mdash; no reps box, because nothing is estimated from it.</div>
+  </div>
+
+  <!-- 11. BENCH -------------------------------------------------------- -->
+  <div class="blk">
+    <div class="blk-hd">
+      <div class="blk-n">7</div>
+      <div class="blk-t">Bench press <span class="unit" style="font-weight:400;font-size:7pt">optional</span></div>
+      <div class="blk-cue">heaviest clean set &middot; load and reps</div>
+    </div>
+    <div class="row c-lift">
+      <div><div class="lbl">Load lifted <span class="unit">kg</span></div><div class="bx"></div></div>
+      <div><div class="lbl">Reps</div><div class="bx"></div></div>
+      <div><div class="lbl">Notes &mdash; pause, touch-and-go, spotter</div><div class="bx"></div></div>
+    </div>
+    <div class="rng">Expect 20&ndash;220 kg at 1&ndash;8 reps. Not in your battery? Leave it blank &mdash; the athlete is not penalised.</div>
+  </div>
+
+  <!-- 12. REPEATED SPRINT ---------------------------------------------- -->
+  <div class="blk">
+    <div class="blk-hd">
+      <div class="blk-n">8</div>
+      <div class="blk-t">Repeated air bike sprint &mdash; 6 &times; 15 s / 45 s</div>
+      <div class="blk-cue">write the <b>peak watts</b> the console shows for each sprint</div>
+    </div>
+    <div class="row c-rep">
+      <div><div class="lbl">Sprint 1 <span class="unit">W</span></div><div class="bx"></div></div>
+      <div><div class="lbl">Sprint 2 <span class="unit">W</span></div><div class="bx"></div></div>
+      <div><div class="lbl">Sprint 3 <span class="unit">W</span></div><div class="bx"></div></div>
+      <div><div class="lbl">Sprint 4 <span class="unit">W</span></div><div class="bx"></div></div>
+      <div><div class="lbl">Sprint 5 <span class="unit">W</span></div><div class="bx"></div></div>
+      <div><div class="lbl">Sprint 6 <span class="unit">W</span></div><div class="bx"></div></div>
+      <div><div class="lbl">Config OK</div><div class="bx"></div></div>
+    </div>
+    <div class="rng">Peaks typically 400&ndash;1800 W. Peak only &mdash; the app derives the average, best sprint and % loss of watts. Change the work/rest or sprint count and it is <b>not benchmarked</b>: note it.</div>
+  </div>
+
+  <!-- 14. 12 MIN ------------------------------------------------------- -->
+  <div class="blk">
+    <div class="blk-hd">
+      <div class="blk-n">9</div>
+      <div class="blk-t">12-minute air bike capacity test</div>
+      <div class="blk-cue">average watts for <b>each minute</b> off the console &middot; heart rates optional</div>
+    </div>
+    <div class="mins">
+      <div><div class="lbl">1</div><div class="bx bx-sm"></div></div>
+      <div><div class="lbl">2</div><div class="bx bx-sm"></div></div>
+      <div><div class="lbl">3</div><div class="bx bx-sm"></div></div>
+      <div><div class="lbl">4</div><div class="bx bx-sm"></div></div>
+      <div><div class="lbl">5</div><div class="bx bx-sm"></div></div>
+      <div><div class="lbl">6</div><div class="bx bx-sm"></div></div>
+      <div><div class="lbl">7</div><div class="bx bx-sm"></div></div>
+      <div><div class="lbl">8</div><div class="bx bx-sm"></div></div>
+      <div><div class="lbl">9</div><div class="bx bx-sm"></div></div>
+      <div><div class="lbl">10</div><div class="bx bx-sm"></div></div>
+      <div><div class="lbl">11</div><div class="bx bx-sm"></div></div>
+      <div><div class="lbl">12</div><div class="bx bx-sm"></div></div>
+    </div>
+    <div class="row c-hr" style="margin-top:1.8mm">
+      <div><div class="lbl">Total distance <span class="unit">km</span></div><div class="bx"></div></div>
+      <div><div class="lbl">Avg HR <span class="unit">bpm</span></div><div class="bx"></div></div>
+      <div><div class="lbl">Peak HR <span class="unit">bpm</span></div><div class="bx"></div></div>
+      <div><div class="lbl">Notes &mdash; pacing, stopped early, encouragement given</div><div class="bx"></div></div>
+    </div>
+    <div class="rng">Minute watts typically 60&ndash;700 W; distance 2&ndash;12 km. This is a <b>test of 12-minute air bike performance</b> &mdash; it is not VO<sub>2</sub>max and must never be called that. A missed minute stays blank.</div>
+  </div>
+
+  <!-- 30 S SPRINT (separate session) ----------------------------------- -->
+  <div class="blk">
+    <div class="blk-hd">
+      <div class="blk-n">&mdash;</div>
+      <div class="blk-t">30-second air bike sprint <span class="unit" style="font-weight:400;font-size:7pt">separate session</span></div>
+      <div class="blk-cue">average watts per 10 s block &mdash; <b>not</b> on the same day as the tests above</div>
+    </div>
+    <div class="row c-s30">
+      <div><div class="lbl">0&ndash;10 s <span class="unit">W</span></div><div class="bx"></div></div>
+      <div><div class="lbl">10&ndash;20 s <span class="unit">W</span></div><div class="bx"></div></div>
+      <div><div class="lbl">20&ndash;30 s <span class="unit">W</span></div><div class="bx"></div></div>
+      <div><div class="lbl">Date of this session</div><div class="bx"></div></div>
+    </div>
+    <div class="rng">Expect 150&ndash;2000 W per block. Three maximal bike efforts cannot all be valid in one day, so this sits outside the main battery. The app derives peak, mean, min and fatigue index.</div>
+  </div>
+
+  <!-- FOOTER ----------------------------------------------------------- -->
+  <div class="ft">
+    <div class="ft-note">
+      <p><b>Before you leave the gym:</b> check every blank is a test you
+      genuinely did not run.</p>
+      <p>Records physical performance only &mdash; no injury diagnosis, no
+      injury-risk assessment, no prediction of fighting ability. App benchmarks
+      are <b>PGP provisional</b> standards, not published norms.</p>
+    </div>
+    <div class="ft-sig">
+      <div class="lbl">Tester signature</div>
+      <div class="sig-line"></div>
+      <p style="margin-top:1.4mm">Sheet mirrors protocol <b>PGP v1.0</b></p>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
